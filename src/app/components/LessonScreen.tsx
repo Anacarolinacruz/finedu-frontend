@@ -1,268 +1,414 @@
-import { useState } from 'react';
-import { ArrowLeft, Play, FileText, CheckCircle, Circle, Award } from 'lucide-react';
-import { motion } from 'motion/react';
+import { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  Loader2,
+} from 'lucide-react';
+
+import {
+  completeLesson,
+  getLesson,
+} from '../services/api';
+
+import type {
+  LessonDetail,
+  UserProgress,
+} from '../services/api';
 
 interface LessonScreenProps {
+  lessonId: string;
   onBack: () => void;
   onNavigate: (screen: string) => void;
+  onOpenLesson: (lessonId: string) => void;
+  onUserProgressUpdate: (user: UserProgress) => void;
 }
 
-export default function LessonScreen({ onBack, onNavigate }: LessonScreenProps) {
-  const [activeTab, setActiveTab] = useState<'video' | 'materials' | 'quiz'>('video');
-  const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
-  const [showResults, setShowResults] = useState(false);
+export default function LessonScreen({
+  lessonId,
+  onBack,
+  onOpenLesson,
+  onUserProgressUpdate,
+}: LessonScreenProps) {
+  const [lesson, setLesson] =
+    useState<LessonDetail | null>(null);
 
-  const lessons = [
-    { id: 1, title: 'Introdução à Educação Financeira', duration: '12:30', completed: true },
-    { id: 2, title: 'A Importância de Poupar', duration: '15:45', completed: true },
-    { id: 3, title: 'Planejamento Financeiro Pessoal', duration: '18:20', completed: false },
-    { id: 4, title: 'Como Definir Metas Financeiras', duration: '14:10', completed: false },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
 
-  const materials = [
-    { id: 1, title: 'Planilha de Orçamento Pessoal', type: 'PDF', size: '245 KB' },
-    { id: 2, title: 'Guia Completo de Educação Financeira', type: 'PDF', size: '1.2 MB' },
-    { id: 3, title: 'Exercícios Práticos', type: 'PDF', size: '340 KB' },
-  ];
+  const [completing, setCompleting] = useState(false);
 
-  const quizQuestions = [
-    {
-      id: 1,
-      question: 'Qual é o primeiro passo para ter controle financeiro?',
-      options: [
-        'Investir em ações',
-        'Fazer um orçamento mensal',
-        'Comprar um carro',
-        'Pedir empréstimo'
-      ],
-      correct: 'Fazer um orçamento mensal'
-    },
-    {
-      id: 2,
-      question: 'Qual porcentagem da renda é recomendada para reserva de emergência?',
-      options: [
-        '5% a 10%',
-        '10% a 20%',
-        '20% a 30%',
-        '50% ou mais'
-      ],
-      correct: '10% a 20%'
-    },
-    {
-      id: 3,
-      question: 'O que é educação financeira?',
-      options: [
-        'Apenas aprender a investir',
-        'Saber economizar dinheiro',
-        'Conhecimento para gerir finanças de forma consciente',
-        'Ter muito dinheiro'
-      ],
-      correct: 'Conhecimento para gerir finanças de forma consciente'
+  const [completionError, setCompletionError] =
+    useState<string | null>(null);
+
+  const [completionMessage, setCompletionMessage] =
+    useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadLesson() {
+      setLoading(true);
+      setError(null);
+      setLesson(null);
+      setCompletionError(null);
+      setCompletionMessage(null);
+
+      try {
+        const result = await getLesson(
+          lessonId,
+          controller.signal,
+        );
+
+        if (!controller.signal.aborted) {
+          setLesson(result);
+        }
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : 'Não foi possível carregar a aula.',
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
     }
-  ];
 
-  const handleQuizSubmit = () => {
-    setShowResults(true);
-  };
+    void loadLesson();
 
-  const correctAnswers = quizQuestions.filter(q => quizAnswers[q.id] === q.correct).length;
+    return () => controller.abort();
+  }, [lessonId, retry]);
+
+  async function handleCompleteLesson() {
+    if (!lesson || lesson.completed || completing) {
+      return;
+    }
+
+    const currentLessonId = lesson.id;
+
+    setCompleting(true);
+    setCompletionError(null);
+    setCompletionMessage(null);
+
+    try {
+      const result = await completeLesson(currentLessonId);
+
+      if (!result.completed) {
+        setCompletionError(
+          'A conclusão não foi confirmada. Tente novamente.',
+        );
+        return;
+      }
+
+      setLesson((current) => {
+        if (!current || current.id !== currentLessonId) {
+          return current;
+        }
+
+        return {
+          ...current,
+          completed: result.completed,
+          completedAt: result.completedAt,
+        };
+      });
+
+      // Atualiza o saldo global com o valor retornado pelo backend.
+      onUserProgressUpdate(result.user);
+
+      const message = result.alreadyCompleted
+        ? 'Esta aula já estava concluída.'
+        : 'Aula concluída! Seu progresso foi salvo.';
+
+      const xpMessage =
+        result.xpAwarded > 0
+          ? ` +${result.xpAwarded} XP recebidos nesta atualização.`
+          : '';
+
+      const quizMessage =
+        result.course.hasFinalQuiz &&
+        result.course.quizUnlocked &&
+        result.course.status !== 'COMPLETED'
+          ? ' O questionário final está disponível na tela da trilha.'
+          : '';
+
+      setCompletionMessage(
+        `${message}${xpMessage}${quizMessage}`,
+      );
+    } catch (err) {
+      setCompletionError(
+        err instanceof Error
+          ? err.message
+          : 'Não foi possível concluir a aula.',
+      );
+    } finally {
+      setCompleting(false);
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] pb-8">
-      <div className="bg-[#1E1E1E] px-6 pt-8 pb-4">
-        <div className="flex items-center gap-4 mb-6">
-          <button onClick={onBack} className="text-[#B3B3B3] hover:text-white transition-colors">
-            <ArrowLeft className="w-6 h-6" />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-xl font-bold text-white">Educação Financeira Básica</h1>
-            <p className="text-sm text-[#B3B3B3]">Aula 3 de 12</p>
-          </div>
-        </div>
-
-        <div className="flex gap-2 border-b border-white/10">
-          {[
-            { id: 'video', label: 'Vídeo', icon: Play },
-            { id: 'materials', label: 'Material', icon: FileText },
-            { id: 'quiz', label: 'Quiz', icon: Award }
-          ].map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id as any)}
-              className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors ${
-                activeTab === id
-                  ? 'text-[#4ADE80] border-b-2 border-[#4ADE80]'
-                  : 'text-[#B3B3B3] hover:text-white'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="px-6 pt-6">
-        {activeTab === 'video' && (
-          <div className="space-y-6">
-            <div className="bg-[#1E1E1E] rounded-2xl overflow-hidden aspect-video flex items-center justify-center border border-white/10">
-              <div className="text-center">
-                <div className="w-20 h-20 bg-[#4ADE80] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Play className="w-10 h-10 text-[#0F0F0F]" />
-                </div>
-                <p className="text-white font-medium">Planejamento Financeiro Pessoal</p>
-                <p className="text-[#B3B3B3] text-sm">18:20</p>
-              </div>
-            </div>
-
-            <div className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-5">
-              <h3 className="text-white font-semibold mb-3">Sobre esta aula</h3>
-              <p className="text-[#B3B3B3] text-sm leading-relaxed mb-4">
-                Nesta aula você aprenderá os fundamentos do planejamento financeiro pessoal,
-                incluindo como organizar suas finanças, definir prioridades e criar um plano
-                de ação para alcançar seus objetivos.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1 bg-[#4ADE80]/10 border border-[#4ADE80] rounded-full text-[#4ADE80] text-xs">
-                  Iniciante
-                </span>
-                <span className="px-3 py-1 bg-[#0F0F0F] rounded-full text-[#B3B3B3] text-xs">
-                  18 minutos
-                </span>
-                <span className="px-3 py-1 bg-[#0F0F0F] rounded-full text-[#B3B3B3] text-xs">
-                  +50 XP
-                </span>
-              </div>
-            </div>
-
-            <div className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-5">
-              <h3 className="text-white font-semibold mb-4">Próximas aulas</h3>
-              <div className="space-y-3">
-                {lessons.map((lesson) => (
-                  <div
-                    key={lesson.id}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-[#0F0F0F] hover:bg-[#0F0F0F]/50 transition-colors cursor-pointer"
-                  >
-                    {lesson.completed ? (
-                      <CheckCircle className="w-5 h-5 text-[#4ADE80] flex-shrink-0" />
-                    ) : (
-                      <Circle className="w-5 h-5 text-[#B3B3B3] flex-shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium truncate ${lesson.completed ? 'text-[#B3B3B3]' : 'text-white'}`}>
-                        {lesson.title}
-                      </p>
-                    </div>
-                    <span className="text-xs text-[#B3B3B3] flex-shrink-0">{lesson.duration}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <button className="w-full bg-[#4ADE80] text-[#0F0F0F] px-8 py-4 rounded-2xl font-semibold hover:bg-[#22C55E] transition-colors">
-              Concluir Aula
-            </button>
-          </div>
-        )}
-
-        {activeTab === 'materials' && (
-          <div className="space-y-3">
-            {materials.map((material) => (
-              <div
-                key={material.id}
-                className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-4 flex items-center gap-4"
-              >
-                <div className="w-12 h-12 bg-[#4ADE80]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <FileText className="w-6 h-6 text-[#4ADE80]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-medium mb-1">{material.title}</p>
-                  <p className="text-sm text-[#B3B3B3]">{material.type} • {material.size}</p>
-                </div>
-                <button className="px-4 py-2 bg-[#4ADE80]/10 border border-[#4ADE80] rounded-xl text-[#4ADE80] text-sm font-medium hover:bg-[#4ADE80]/20 transition-colors">
-                  Baixar
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {activeTab === 'quiz' && !showResults && (
-          <div className="space-y-6">
-            <div className="bg-[#4ADE80]/10 border border-[#4ADE80] rounded-2xl p-4">
-              <p className="text-[#4ADE80] text-sm">
-                Teste seus conhecimentos e ganhe <strong>+100 XP</strong>
-              </p>
-            </div>
-
-            {quizQuestions.map((question, index) => (
-              <div key={question.id} className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-5">
-                <p className="text-white font-medium mb-4">
-                  {index + 1}. {question.question}
-                </p>
-                <div className="space-y-2">
-                  {question.options.map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => setQuizAnswers({ ...quizAnswers, [question.id]: option })}
-                      className={`w-full text-left p-4 rounded-xl border transition-all ${
-                        quizAnswers[question.id] === option
-                          ? 'bg-[#4ADE80]/10 border-[#4ADE80] text-white'
-                          : 'bg-[#0F0F0F] border-white/10 text-[#B3B3B3] hover:border-[#4ADE80]/50'
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-
-            <button
-              onClick={handleQuizSubmit}
-              disabled={Object.keys(quizAnswers).length < quizQuestions.length}
-              className="w-full bg-[#4ADE80] text-[#0F0F0F] px-8 py-4 rounded-2xl font-semibold hover:bg-[#22C55E] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Enviar Respostas
-            </button>
-          </div>
-        )}
-
-        {activeTab === 'quiz' && showResults && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="space-y-6"
+    <div className="min-h-screen bg-[#0F0F0F] text-white pb-10">
+      <header className="bg-[#1E1E1E] border-b border-white/10">
+        <div className="max-w-4xl mx-auto px-6 pt-8 pb-6 flex items-center gap-4">
+          <button
+            type="button"
+            onClick={onBack}
+            disabled={completing}
+            aria-label="Voltar para os cursos"
+            className="w-11 h-11 shrink-0 rounded-full bg-[#0F0F0F] flex items-center justify-center text-[#B3B3B3] hover:text-white transition-colors disabled:opacity-50"
           >
-            <div className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-8 text-center">
-              <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                correctAnswers >= 2 ? 'bg-[#4ADE80]/10' : 'bg-yellow-500/10'
-              }`}>
-                <Award className={`w-10 h-10 ${correctAnswers >= 2 ? 'text-[#4ADE80]' : 'text-yellow-500'}`} />
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-[#4ADE80] mb-1">
+              {lesson?.courseTitle ?? 'Trilha de aprendizagem'}
+            </p>
+
+            <h1 className="text-xl font-bold">
+              {lesson?.title ?? 'Sua aula'}
+            </h1>
+          </div>
+
+          <BookOpen className="w-6 h-6 shrink-0 text-[#4ADE80]" />
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-6 pt-6">
+        {loading ? (
+          <div
+            role="status"
+            className="flex items-center justify-center gap-3 py-16 text-[#B3B3B3]"
+          >
+            <Loader2 className="w-6 h-6 animate-spin text-[#4ADE80]" />
+            Carregando aula…
+          </div>
+        ) : error ? (
+          <section
+            role="alert"
+            className="bg-[#1E1E1E] border border-red-400/30 rounded-2xl p-6"
+          >
+            <p className="mb-4">{error}</p>
+
+            <button
+              type="button"
+              onClick={() => setRetry((value) => value + 1)}
+              className="bg-[#4ADE80] text-[#0F0F0F] rounded-xl px-5 py-3 font-semibold"
+            >
+              Tentar novamente
+            </button>
+          </section>
+        ) : lesson ? (
+          <div className="space-y-6">
+            <section className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-5">
+              <div className="flex flex-wrap items-center gap-4 text-sm">
+                <span className="flex items-center gap-2 text-[#B3B3B3]">
+                  <Clock className="w-4 h-4" />
+                  {Math.ceil(lesson.durationSeconds / 60)}
+                  {' min de leitura'}
+                </span>
+
+                {lesson.completed && (
+                  <span className="flex items-center gap-2 text-[#4ADE80]">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Aula concluída
+                  </span>
+                )}
               </div>
-              <h2 className="text-2xl font-bold text-white mb-2">
-                {correctAnswers >= 2 ? 'Parabéns!' : 'Continue tentando!'}
+            </section>
+
+            <article className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-6">
+              <h2 className="text-lg font-semibold mb-5">
+                Conteúdo da aula
               </h2>
-              <p className="text-[#B3B3B3] mb-6">
-                Você acertou {correctAnswers} de {quizQuestions.length} questões
+
+              {lesson.content.trim() ? (
+                <div className="break-words text-[#D1D5DB] leading-relaxed">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      h1: ({ children }) => (
+                        <h1 className="text-2xl font-bold text-white mt-6 mb-4">
+                          {children}
+                        </h1>
+                      ),
+
+                      h2: ({ children }) => (
+                        <h2 className="text-xl font-semibold text-white mt-8 mb-4">
+                          {children}
+                        </h2>
+                      ),
+
+                      h3: ({ children }) => (
+                        <h3 className="text-lg font-semibold text-[#4ADE80] mt-6 mb-3">
+                          {children}
+                        </h3>
+                      ),
+
+                      p: ({ children }) => (
+                        <p className="mb-4 leading-7">
+                          {children}
+                        </p>
+                      ),
+
+                      ul: ({ children }) => (
+                        <ul className="list-disc pl-6 mb-5 space-y-2">
+                          {children}
+                        </ul>
+                      ),
+
+                      ol: ({ children }) => (
+                        <ol className="list-decimal pl-6 mb-5 space-y-2">
+                          {children}
+                        </ol>
+                      ),
+
+                      strong: ({ children }) => (
+                        <strong className="font-semibold text-white">
+                          {children}
+                        </strong>
+                      ),
+
+                      blockquote: ({ children }) => (
+                        <blockquote className="border-l-4 border-[#4ADE80] bg-[#4ADE80]/10 rounded-r-xl pl-4 pr-4 pt-4 pb-1 my-6">
+                          {children}
+                        </blockquote>
+                      ),
+
+                      table: ({ children }) => (
+                        <div className="overflow-x-auto my-6 rounded-xl border border-white/10">
+                          <table className="w-full border-collapse text-sm">
+                            {children}
+                          </table>
+                        </div>
+                      ),
+
+                      thead: ({ children }) => (
+                        <thead className="bg-[#4ADE80]/10 text-white">
+                          {children}
+                        </thead>
+                      ),
+
+                      th: ({ children, style }) => (
+                        <th
+                          style={style}
+                          className="px-4 py-3 border-b border-white/10 text-left font-semibold"
+                        >
+                          {children}
+                        </th>
+                      ),
+
+                      td: ({ children, style }) => (
+                        <td
+                          style={style}
+                          className="px-4 py-3 border-b border-white/10"
+                        >
+                          {children}
+                        </td>
+                      ),
+                    }}
+                  >
+                    {lesson.content}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <p className="text-[#B3B3B3]">
+                  Esta aula ainda não possui conteúdo disponível.
+                </p>
+              )}
+            </article>
+
+            {completionError && (
+              <p
+                role="alert"
+                className="rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-red-300"
+              >
+                {completionError}
               </p>
-              <div className="inline-block bg-[#4ADE80]/10 border border-[#4ADE80] px-6 py-3 rounded-2xl">
-                <span className="text-[#4ADE80] font-semibold text-lg">+{correctAnswers * 30} XP</span>
-              </div>
+            )}
+
+            {completionMessage && (
+              <p
+                role="status"
+                className="rounded-xl border border-[#4ADE80]/30 bg-[#4ADE80]/10 p-4 text-[#4ADE80]"
+              >
+                {completionMessage}
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={() => void handleCompleteLesson()}
+              disabled={completing || lesson.completed}
+              className="w-full bg-[#4ADE80] text-[#0F0F0F] px-6 py-4 rounded-2xl font-semibold hover:bg-[#22C55E] transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {completing ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Salvando progresso…
+                </>
+              ) : lesson.completed ? (
+                <>
+                  <CheckCircle2 className="w-5 h-5" />
+                  Aula concluída
+                </>
+              ) : (
+                'Concluir aula'
+              )}
+            </button>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                disabled={
+                  !lesson.previousLessonId || completing
+                }
+                onClick={() => {
+                  if (lesson.previousLessonId) {
+                    onOpenLesson(lesson.previousLessonId);
+                  }
+                }}
+                className="border border-white/10 bg-[#1E1E1E] rounded-xl px-4 py-3 flex items-center justify-center gap-2 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Aula anterior
+              </button>
+
+              <button
+                type="button"
+                disabled={!lesson.nextLessonId || completing}
+                onClick={() => {
+                  if (lesson.nextLessonId) {
+                    onOpenLesson(lesson.nextLessonId);
+                  }
+                }}
+                className="border border-white/10 bg-[#1E1E1E] rounded-xl px-4 py-3 flex items-center justify-center gap-2 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Próxima aula
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
 
             <button
-              onClick={() => {
-                setShowResults(false);
-                setQuizAnswers({});
-              }}
-              className="w-full bg-[#4ADE80] text-[#0F0F0F] px-8 py-4 rounded-2xl font-semibold hover:bg-[#22C55E] transition-colors"
+              type="button"
+              onClick={onBack}
+              disabled={completing}
+              className="w-full py-3 text-[#4ADE80] font-medium disabled:opacity-50"
             >
-              Tentar Novamente
+              Voltar para os cursos
             </button>
-          </motion.div>
-        )}
-      </div>
+          </div>
+        ) : null}
+      </main>
     </div>
   );
 }

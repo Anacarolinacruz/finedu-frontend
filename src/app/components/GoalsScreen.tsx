@@ -1,308 +1,920 @@
-import { useState } from 'react';
-import { ArrowLeft, Plus, Target as TargetIcon, Calendar, DollarSign, Home, BookOpen, TrendingUp, Target, User } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { getGoalDeadlineInfo } from '../utils/goalDeadline';
+import { useEffect, useRef, useState } from 'react';
+import type { FormEvent } from 'react';
+
+import {
+  ArrowLeft,
+  Plus,
+  Pencil,
+  Trash2,
+  Loader2,
+  Home,
+  BookOpen,
+  TrendingUp,
+  Target,
+  User,
+  X,
+} from 'lucide-react';
+import { motion } from 'motion/react';
+
+import {
+  getGoals,
+  createGoal,
+  updateGoal,
+  deleteGoal,
+} from '../services/api';
+import type { Goal, CreateGoalInput } from '../services/api';
 
 interface GoalsScreenProps {
   onBack: () => void;
   onNavigate: (screen: string) => void;
+  onSimulateGoal: (goal: Goal) => void;
 }
 
-export default function GoalsScreen({ onBack, onNavigate }: GoalsScreenProps) {
-  const [showNewGoal, setShowNewGoal] = useState(false);
-  const [newGoal, setNewGoal] = useState({
-    title: '',
-    target: '',
-    deadline: '',
-    monthly: '',
-    emoji: '🎯',
-  });
+interface GoalForm {
+  id: string | null;
+  title: string;
+  emoji: string;
+  targetAmount: string;
+  currentAmount: string;
+  monthlyAmount: string;
+  deadline: string;
+}
 
-  const goals = [
+const emptyForm: GoalForm = {
+  id: null,
+  title: '',
+  emoji: '🎯',
+  targetAmount: '',
+  currentAmount: '0',
+  monthlyAmount: '',
+  deadline: '',
+};
+
+const emojis = [
+  '🎯',
+  '💻',
+  '✈️',
+  '🚗',
+  '🏠',
+  '🎓',
+  '💼',
+  '🎮',
+  '📱',
+  '⌚',
+];
+
+const moneyFormatter = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+});
+
+const inputClass =
+  'w-full bg-[#0F0F0F] border border-white/10 rounded-xl ' +
+  'px-4 py-3 text-white focus:border-[#4ADE80] focus:outline-none';
+
+function formatMoney(value: number) {
+  return moneyFormatter.format(value);
+}
+
+function progressOf(goal: Goal) {
+  if (goal.targetAmount <= 0) return 0;
+
+  return Math.max(
+    0,
+    Math.min(
+      (goal.currentAmount / goal.targetAmount) * 100,
+      100,
+    ),
+  );
+}
+
+function localDateValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error
+    ? error.message
+    : 'Não foi possível concluir a operação.';
+}
+
+export default function GoalsScreen({
+  onBack,
+  onNavigate,
+  onSimulateGoal,
+}: GoalsScreenProps) {
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [retry, setRetry] = useState(0);
+
+  const [form, setForm] = useState<GoalForm | null>(null);
+  const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const [deletingId, setDeletingId] =
+    useState<string | null>(null);
+
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const saveInFlight = useRef(false);
+  const deleteInFlight = useRef(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadGoals() {
+      setLoading(true);
+      setLoadError('');
+
+      try {
+        const result = await getGoals(controller.signal);
+
+        if (!controller.signal.aborted) {
+          setGoals(result);
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setLoadError(errorMessage(error));
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadGoals();
+
+    return () => controller.abort();
+  }, [retry]);
+
+  const isFormOpen = form !== null;
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+
+    if (!dialog) return;
+
+    if (isFormOpen && !dialog.open) {
+      dialog.showModal();
+    } else if (!isFormOpen && dialog.open) {
+      dialog.close();
+    }
+  }, [isFormOpen]);
+
+  function openCreate() {
+    setFormError('');
+    setForm({ ...emptyForm });
+  }
+
+  function openEdit(goal: Goal) {
+    setFormError('');
+
+    setForm({
+      id: goal.id,
+      title: goal.title,
+      emoji: goal.emoji,
+      targetAmount: String(goal.targetAmount),
+      currentAmount: String(goal.currentAmount),
+      monthlyAmount: String(goal.monthlyAmount),
+      deadline: goal.deadline,
+    });
+  }
+
+  function closeForm() {
+    if (saveInFlight.current) return;
+
+    setForm(null);
+    setFormError('');
+  }
+
+  function changeField(
+    field: Exclude<keyof GoalForm, 'id'>,
+    value: string,
+  ) {
+    setForm((current) =>
+      current ? { ...current, [field]: value } : current,
+    );
+  }
+
+  async function handleSave(
+    event: FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
+
+    if (!form || saveInFlight.current) return;
+
+    setFormError('');
+
+    const input: CreateGoalInput = {
+      title: form.title.trim(),
+      emoji: form.emoji,
+      targetAmount: Number(form.targetAmount),
+      currentAmount: Number(form.currentAmount),
+      monthlyAmount: Number(form.monthlyAmount),
+      deadline: form.deadline,
+    };
+
+    const amounts = [
+      input.targetAmount,
+      input.currentAmount,
+      input.monthlyAmount,
+    ];
+
+    if (
+      input.title.length < 2 ||
+      !input.deadline ||
+      !form.targetAmount.trim() ||
+      !form.currentAmount.trim() ||
+      !form.monthlyAmount.trim() ||
+      amounts.some((value) => !Number.isFinite(value)) ||
+      input.targetAmount <= 0 ||
+      input.currentAmount < 0 ||
+      input.monthlyAmount < 0
+    ) {
+      setFormError(
+        'Confira o nome, os valores e o prazo da meta.',
+      );
+      return;
+    }
+
+    if (
+      form.id === null &&
+      input.deadline < localDateValue(new Date())
+    ) {
+      setFormError(
+        'Escolha hoje ou uma data futura para a nova meta.',
+      );
+      return;
+    }
+
+    saveInFlight.current = true;
+    setSaving(true);
+
+    try {
+      const savedGoal = form.id
+        ? await updateGoal(form.id, input)
+        : await createGoal(input);
+
+      setGoals((current) => {
+        const others = current.filter(
+          (goal) => goal.id !== savedGoal.id,
+        );
+
+        return [...others, savedGoal].sort(
+          (a, b) =>
+            a.deadline.localeCompare(b.deadline) ||
+            a.id.localeCompare(b.id),
+        );
+      });
+
+      setActionError('');
+      setForm(null);
+    } catch (error) {
+      setFormError(errorMessage(error));
+    } finally {
+      saveInFlight.current = false;
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete(goal: Goal) {
+    if (deleteInFlight.current) return;
+
+    const confirmed = window.confirm(
+      `Excluir a meta "${goal.title}"? Esta ação não pode ser desfeita.`,
+    );
+
+    if (!confirmed) return;
+
+    deleteInFlight.current = true;
+    setDeletingId(goal.id);
+    setActionError('');
+
+    try {
+      await deleteGoal(goal.id);
+
+      setGoals((current) =>
+        current.filter((item) => item.id !== goal.id),
+      );
+    } catch (error) {
+      setActionError(errorMessage(error));
+    } finally {
+      deleteInFlight.current = false;
+      setDeletingId(null);
+    }
+  }
+
+  const totalSaved = goals.reduce(
+    (sum, goal) => sum + goal.currentAmount,
+    0,
+  );
+
+  const activeGoals = goals.filter(
+    (goal) => goal.currentAmount < goal.targetAmount,
+  ).length;
+
+  const averageProgress =
+    goals.length > 0
+      ? goals.reduce(
+          (sum, goal) => sum + progressOf(goal),
+          0,
+        ) / goals.length
+      : 0;
+
+  const navigation = [
+    { screen: 'dashboard', label: 'Home', icon: Home },
+    { screen: 'courses', label: 'Cursos', icon: BookOpen },
     {
-      id: 1,
-      title: 'Comprar Notebook',
-      current: 1200,
-      target: 3000,
-      deadline: '2026-12-31',
-      monthly: 200,
-      emoji: '💻',
+      screen: 'simulator',
+      label: 'Investir',
+      icon: TrendingUp,
     },
-    {
-      id: 2,
-      title: 'Fazer Intercâmbio',
-      current: 5000,
-      target: 15000,
-      deadline: '2027-06-30',
-      monthly: 500,
-      emoji: '✈️',
-    },
-    {
-      id: 3,
-      title: 'Comprar Carro',
-      current: 8000,
-      target: 30000,
-      deadline: '2028-12-31',
-      monthly: 800,
-      emoji: '🚗',
-    },
+    { screen: 'goals', label: 'Metas', icon: Target },
+    { screen: 'profile', label: 'Perfil', icon: User },
   ];
 
-  const emojis = ['🎯', '💻', '✈️', '🚗', '🏠', '🎓', '💼', '🎮', '📱', '⌚'];
-
-  const calculateMonthsRemaining = (deadline: string) => {
-    const today = new Date();
-    const end = new Date(deadline);
-    const months = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30));
-    return months;
-  };
-
-  const calculateProgress = (current: number, target: number) => {
-    return Math.min((current / target) * 100, 100);
-  };
-
   return (
-    <div className="min-h-screen bg-[#0F0F0F] pb-24">
-      <div className="bg-[#1E1E1E] px-6 pt-8 pb-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <button onClick={onBack} className="text-[#B3B3B3] hover:text-white transition-colors">
-              <ArrowLeft className="w-6 h-6" />
-            </button>
-            <h1 className="text-2xl font-bold text-white">Minhas Metas</h1>
-          </div>
-          <button
-            onClick={() => setShowNewGoal(true)}
-            className="w-10 h-10 bg-[#4ADE80] rounded-full flex items-center justify-center hover:bg-[#22C55E] transition-colors"
-          >
-            <Plus className="w-5 h-5 text-[#0F0F0F]" />
-          </button>
-        </div>
+    <div className="min-h-screen bg-[#0F0F0F] text-white pb-28">
+      <header className="bg-[#1E1E1E] px-6 pt-8 pb-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={onBack}
+                aria-label="Voltar"
+                className="text-[#B3B3B3] hover:text-white"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </button>
 
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-[#0F0F0F] rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-white">{goals.length}</p>
-            <p className="text-xs text-[#B3B3B3]">Metas Ativas</p>
-          </div>
-          <div className="bg-[#0F0F0F] rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-[#4ADE80]">
-              R$ {goals.reduce((sum, g) => sum + g.current, 0).toLocaleString()}
-            </p>
-            <p className="text-xs text-[#B3B3B3]">Total Economizado</p>
-          </div>
-          <div className="bg-[#0F0F0F] rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-white">
-              {Math.round(goals.reduce((sum, g) => sum + calculateProgress(g.current, g.target), 0) / goals.length)}%
-            </p>
-            <p className="text-xs text-[#B3B3B3]">Progresso Médio</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="px-6 pt-6 space-y-4">
-        {goals.map((goal) => {
-          const progress = calculateProgress(goal.current, goal.target);
-          const monthsLeft = calculateMonthsRemaining(goal.deadline);
-          const neededPerMonth = (goal.target - goal.current) / monthsLeft;
-          const isOnTrack = goal.monthly >= neededPerMonth;
-
-          return (
-            <div key={goal.id} className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-5">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-[#4ADE80]/10 rounded-xl flex items-center justify-center text-2xl">
-                    {goal.emoji}
-                  </div>
-                  <div>
-                    <h3 className="text-white font-semibold">{goal.title}</h3>
-                    <p className="text-sm text-[#B3B3B3]">{monthsLeft} meses restantes</p>
-                  </div>
-                </div>
-                <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  isOnTrack
-                    ? 'bg-[#4ADE80]/10 text-[#4ADE80]'
-                    : 'bg-yellow-500/10 text-yellow-500'
-                }`}>
-                  {isOnTrack ? 'No caminho' : 'Atenção'}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-[#B3B3B3]">Progresso</span>
-                    <span className="text-sm font-medium text-white">
-                      R$ {goal.current.toLocaleString()} / R$ {goal.target.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="h-3 bg-[#0F0F0F] rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${progress}%` }}
-                      transition={{ duration: 1, ease: "easeOut" }}
-                      className="h-full bg-[#4ADE80] rounded-full"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <span className="text-xs text-[#B3B3B3]">{progress.toFixed(1)}% concluído</span>
-                    <span className="text-xs text-[#4ADE80]">
-                      Faltam R$ {(goal.target - goal.current).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-[#0F0F0F] rounded-xl p-3">
-                    <p className="text-xs text-[#B3B3B3] mb-1">Aporte Atual</p>
-                    <p className="text-white font-semibold">R$ {goal.monthly}/mês</p>
-                  </div>
-                  <div className="bg-[#0F0F0F] rounded-xl p-3">
-                    <p className="text-xs text-[#B3B3B3] mb-1">Necessário</p>
-                    <p className="text-white font-semibold">R$ {Math.ceil(neededPerMonth)}/mês</p>
-                  </div>
-                </div>
-              </div>
+              <h1 className="text-2xl font-bold">
+                Minhas Metas
+              </h1>
             </div>
-          );
-        })}
-      </div>
 
-      <AnimatePresence>
-        {showNewGoal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 z-50 flex items-end"
-            onClick={() => setShowNewGoal(false)}
-          >
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="bg-[#1E1E1E] w-full rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
+            <button
+              type="button"
+              onClick={openCreate}
+              disabled={loading || Boolean(loadError)}
+              aria-label="Criar meta"
+              className="w-11 h-11 bg-[#4ADE80] rounded-full flex items-center justify-center text-[#0F0F0F] disabled:opacity-50"
             >
-              <div className="w-12 h-1 bg-[#B3B3B3] rounded-full mx-auto mb-6" />
+              <Plus className="w-5 h-5" />
+            </button>
+          </div>
 
-              <h2 className="text-2xl font-bold text-white mb-6">Nova Meta</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              {
+                label: 'Metas em aberto',
+                value: String(activeGoals),
+              },
+              {
+                label: 'Total guardado informado',
+                value: formatMoney(totalSaved),
+              },
+              {
+                label: 'Progresso médio',
+                value: `${Math.round(averageProgress)}%`,
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="bg-[#0F0F0F] rounded-xl p-4 text-center"
+              >
+                <p className="text-xl font-bold text-[#4ADE80] break-words">
+                  {loading || loadError
+                    ? '—'
+                    : item.value}
+                </p>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="text-[#B3B3B3] text-sm mb-2 block">Escolha um ícone</label>
-                  <div className="flex gap-2 overflow-x-auto pb-2">
-                    {emojis.map((emoji) => (
-                      <button
-                        key={emoji}
-                        onClick={() => setNewGoal({ ...newGoal, emoji })}
-                        className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 transition-all ${
-                          newGoal.emoji === emoji
-                            ? 'bg-[#4ADE80]/20 border-2 border-[#4ADE80]'
-                            : 'bg-[#0F0F0F] border-2 border-transparent'
-                        }`}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
+                <p className="text-xs text-[#B3B3B3] mt-1">
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-6 pt-6 space-y-4">
+        {actionError && (
+          <p
+            role="alert"
+            className="rounded-xl border border-red-400/30 p-4 text-red-300"
+          >
+            {actionError}
+          </p>
+        )}
+
+        {loading ? (
+          <div
+            role="status"
+            className="flex justify-center items-center gap-3 py-16 text-[#B3B3B3]"
+          >
+            <Loader2 className="w-6 h-6 animate-spin text-[#4ADE80]" />
+            Carregando metas…
+          </div>
+        ) : loadError ? (
+          <section
+            role="alert"
+            className="bg-[#1E1E1E] rounded-2xl p-6"
+          >
+            <p className="text-red-300 mb-4">
+              {loadError}
+            </p>
+
+            <button
+              type="button"
+              onClick={() =>
+                setRetry((value) => value + 1)
+              }
+              className="bg-[#4ADE80] text-black px-5 py-3 rounded-xl font-semibold"
+            >
+              Tentar novamente
+            </button>
+          </section>
+        ) : goals.length === 0 ? (
+          <section className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-8 text-center">
+            <Target className="w-12 h-12 text-[#4ADE80] mx-auto mb-4" />
+
+            <h2 className="text-xl font-bold mb-2">
+              Crie sua primeira meta
+            </h2>
+
+            <p className="text-[#B3B3B3] mb-5">
+              Defina um objetivo e acompanhe quanto já
+              guardou.
+            </p>
+
+            <button
+              type="button"
+              onClick={openCreate}
+              className="bg-[#4ADE80] text-black px-6 py-3 rounded-xl font-semibold"
+            >
+              Criar meta
+            </button>
+          </section>
+        ) : (
+          goals.map((goal) => {
+            const progress = progressOf(goal);
+
+            const remaining = Math.max(
+              goal.targetAmount - goal.currentAmount,
+              0,
+            );
+
+            const completed = remaining === 0;
+            const deadline = getGoalDeadlineInfo(goal.deadline);
+
+            const neededPerMonth =
+              deadline.months > 0
+                ? remaining / deadline.months
+                : null;
+
+            const onTrack =
+              completed ||
+              (neededPerMonth !== null &&
+                goal.monthlyAmount >= neededPerMonth);
+
+            const status = completed
+              ? 'Concluída'
+              : !deadline.valid
+                ? 'Revisar prazo'
+                : deadline.expired
+                ? 'Prazo vencido'
+                : deadline.dueToday
+                  ? 'Vence hoje'
+                  : deadline.months === 0
+                    ? 'Menos de um mês'
+                    : onTrack
+                    ? 'No caminho'
+                    : 'Rever aporte';
+
+            return (
+              <section
+                key={goal.id}
+                className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-5"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 shrink-0 bg-[#4ADE80]/10 rounded-xl flex items-center justify-center text-2xl">
+                      {goal.emoji}
+                    </div>
+
+                    <div className="min-w-0">
+                      <h2 className="font-semibold break-words">
+                        {goal.title}
+                      </h2>
+
+                      <p className="text-sm text-[#B3B3B3]">
+                        Prazo:{' '}
+                        {new Date(
+                          `${goal.deadline}T00:00:00`,
+                        ).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
                   </div>
+
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      onTrack
+                        ? 'bg-[#4ADE80]/10 text-[#4ADE80]'
+                        : 'bg-yellow-500/10 text-yellow-400'
+                    }`}
+                  >
+                    {status}
+                  </span>
                 </div>
 
-                <div>
-                  <label className="text-[#B3B3B3] text-sm mb-2 block">Nome da Meta</label>
-                  <input
-                    type="text"
-                    value={newGoal.title}
-                    onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })}
-                    placeholder="Ex: Comprar notebook"
-                    className="w-full bg-[#0F0F0F] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-[#B3B3B3] focus:border-[#4ADE80] focus:outline-none transition-colors"
+                <div className="flex flex-wrap justify-between gap-2 mb-2 text-sm">
+                  <span className="text-[#B3B3B3]">
+                    Valor guardado
+                  </span>
+
+                  <span>
+                    {formatMoney(goal.currentAmount)}
+                    {' / '}
+                    {formatMoney(goal.targetAmount)}
+                  </span>
+                </div>
+
+                <div
+                  role="progressbar"
+                  aria-label={`Progresso de ${goal.title}`}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Number(
+                    progress.toFixed(1),
+                  )}
+                  className="h-3 bg-[#0F0F0F] rounded-full overflow-hidden"
+                >
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{
+                      width: `${progress}%`,
+                    }}
+                    className="h-full bg-[#4ADE80] rounded-full"
                   />
                 </div>
 
-                <div>
-                  <label className="text-[#B3B3B3] text-sm mb-2 block">Valor Desejado (R$)</label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#B3B3B3]" />
-                    <input
-                      type="number"
-                      value={newGoal.target}
-                      onChange={(e) => setNewGoal({ ...newGoal, target: e.target.value })}
-                      placeholder="0"
-                      className="w-full bg-[#0F0F0F] border border-white/10 rounded-xl px-12 py-3 text-white placeholder:text-[#B3B3B3] focus:border-[#4ADE80] focus:outline-none transition-colors"
-                    />
+                <div className="flex flex-wrap justify-between gap-2 mt-2 text-xs">
+                  <span className="text-[#B3B3B3]">
+                    {progress.toFixed(1)}% concluído
+                  </span>
+
+                  <span className="text-[#4ADE80]">
+                    {completed
+                      ? 'Objetivo alcançado'
+                      : `Faltam ${formatMoney(remaining)}`}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
+                  <div className="bg-[#0F0F0F] rounded-xl p-3">
+                    <p className="text-xs text-[#B3B3B3] mb-1">
+                      Aporte mensal planejado
+                    </p>
+
+                    <p className="font-semibold">
+                      {formatMoney(goal.monthlyAmount)}
+                    </p>
+                  </div>
+
+                  <div className="bg-[#0F0F0F] rounded-xl p-3">
+                    <p className="text-xs text-[#B3B3B3] mb-1">
+                      Necessário por mês, sem rendimentos
+                    </p>
+
+                    <p className="font-semibold">
+                      {completed
+                        ? formatMoney(0)
+                        : neededPerMonth === null
+                          ? 'Revisar prazo'
+                          : formatMoney(
+                              Math.ceil(
+                                neededPerMonth * 100,
+                              ) / 100,
+                            )}
+                    </p>
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-[#B3B3B3] text-sm mb-2 block">Prazo</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#B3B3B3]" />
-                    <input
-                      type="date"
-                      value={newGoal.deadline}
-                      onChange={(e) => setNewGoal({ ...newGoal, deadline: e.target.value })}
-                      className="w-full bg-[#0F0F0F] border border-white/10 rounded-xl px-12 py-3 text-white focus:border-[#4ADE80] focus:outline-none transition-colors"
-                    />
-                  </div>
-                </div>
+                {!completed && deadline.months > 0 && (
+                  <p className="text-xs text-[#B3B3B3] mt-3">
+                    Planejamento com{' '}
+                    {deadline.months}{' '}
+                    {deadline.months === 1
+                      ? 'mês completo'
+                      : 'meses completos'}
+                    .
+                  </p>
+                )}
 
-                <div>
-                  <label className="text-[#B3B3B3] text-sm mb-2 block">Quanto pode economizar por mês? (R$)</label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#B3B3B3]" />
-                    <input
-                      type="number"
-                      value={newGoal.monthly}
-                      onChange={(e) => setNewGoal({ ...newGoal, monthly: e.target.value })}
-                      placeholder="0"
-                      className="w-full bg-[#0F0F0F] border border-white/10 rounded-xl px-12 py-3 text-white placeholder:text-[#B3B3B3] focus:border-[#4ADE80] focus:outline-none transition-colors"
-                    />
-                  </div>
-                </div>
-              </div>
+                {!completed && deadline.valid && !deadline.expired && !deadline.dueToday && deadline.months === 0 && (
+                  <p className="text-xs text-yellow-300 mt-3">
+                    Falta menos de um mês completo. Revise o prazo ou planeje uma contribuição antes do vencimento.
+                  </p>
+                )}
 
-              <div className="flex gap-3 mt-6">
-                <button
-                  onClick={() => setShowNewGoal(false)}
-                  className="flex-1 bg-[#0F0F0F] border border-white/10 text-white px-6 py-4 rounded-2xl font-semibold hover:border-[#4ADE80]/50 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => {
-                    setShowNewGoal(false);
-                  }}
-                  className="flex-1 bg-[#4ADE80] text-[#0F0F0F] px-6 py-4 rounded-2xl font-semibold hover:bg-[#22C55E] transition-colors"
-                >
-                  Criar Meta
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
+                <div className="flex flex-wrap gap-3 mt-5">
+                  <button
+                    type="button"
+                    onClick={() => onSimulateGoal(goal)}
+                    disabled={deletingId !== null}
+                    className="flex items-center gap-2 bg-[#4ADE80] text-black rounded-xl px-4 py-2 text-sm font-semibold hover:bg-[#22C55E] disabled:opacity-50"
+                  >
+                    <TrendingUp className="w-4 h-4" />
+                    Simular esta meta
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => openEdit(goal)}
+                    disabled={deletingId !== null}
+                    className="flex items-center gap-2 border border-white/10 rounded-xl px-4 py-2 text-sm hover:border-[#4ADE80] disabled:opacity-50"
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Editar / atualizar saldo
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void handleDelete(goal)
+                    }
+                    disabled={deletingId !== null}
+                    className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm text-red-300 disabled:opacity-50"
+                  >
+                    {deletingId === goal.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+
+                    {deletingId === goal.id
+                      ? 'Excluindo…'
+                      : 'Excluir'}
+                  </button>
+                </div>
+              </section>
+            );
+          })
         )}
-      </AnimatePresence>
+      </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#1E1E1E] border-t border-white/10 px-6 py-3">
-        <div className="flex items-center justify-around max-w-md mx-auto">
-          <button onClick={() => onNavigate('dashboard')} className="flex flex-col items-center gap-1 text-[#B3B3B3] hover:text-white transition-colors">
-            <Home className="w-6 h-6" />
-            <span className="text-xs">Home</span>
-          </button>
-          <button onClick={() => onNavigate('courses')} className="flex flex-col items-center gap-1 text-[#B3B3B3] hover:text-white transition-colors">
-            <BookOpen className="w-6 h-6" />
-            <span className="text-xs">Cursos</span>
-          </button>
-          <button onClick={() => onNavigate('simulator')} className="flex flex-col items-center gap-1 text-[#B3B3B3] hover:text-white transition-colors">
-            <TrendingUp className="w-6 h-6" />
-            <span className="text-xs">Investir</span>
-          </button>
-          <button onClick={() => onNavigate('goals')} className="flex flex-col items-center gap-1 text-[#4ADE80]">
-            <Target className="w-6 h-6" />
-            <span className="text-xs">Metas</span>
-          </button>
-          <button onClick={() => onNavigate('profile')} className="flex flex-col items-center gap-1 text-[#B3B3B3] hover:text-white transition-colors">
-            <User className="w-6 h-6" />
-            <span className="text-xs">Perfil</span>
-          </button>
+      <dialog
+        ref={dialogRef}
+        aria-labelledby="goal-form-title"
+        onCancel={(event) => {
+          event.preventDefault();
+          closeForm();
+        }}
+        onClose={() => {
+          if (!saveInFlight.current) {
+            setForm(null);
+          }
+        }}
+        className="m-auto w-[calc(100%_-_2rem)] max-w-lg max-h-[90dvh] overflow-y-auto rounded-3xl border border-white/10 bg-[#1E1E1E] p-6 text-white backdrop:bg-black/80"
+      >
+        {form && (
+          <form onSubmit={handleSave}>
+            <div className="flex justify-between items-center gap-3 mb-6">
+              <h2
+                id="goal-form-title"
+                className="text-2xl font-bold"
+              >
+                {form.id ? 'Editar meta' : 'Nova meta'}
+              </h2>
+
+              <button
+                type="button"
+                onClick={closeForm}
+                disabled={saving}
+                aria-label="Fechar formulário"
+                className="p-2 disabled:opacity-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <fieldset
+              disabled={saving}
+              className="space-y-4"
+            >
+              <div>
+                <p className="text-sm text-[#B3B3B3] mb-2">
+                  Escolha um ícone
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  {emojis.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      aria-label={`Selecionar ícone ${emoji}`}
+                      aria-pressed={
+                        form.emoji === emoji
+                      }
+                      onClick={() =>
+                        changeField('emoji', emoji)
+                      }
+                      className={`w-11 h-11 rounded-xl border text-2xl ${
+                        form.emoji === emoji
+                          ? 'border-[#4ADE80] bg-[#4ADE80]/10'
+                          : 'border-white/10 bg-[#0F0F0F]'
+                      }`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="goal-title"
+                  className="block text-sm text-[#B3B3B3] mb-2"
+                >
+                  Nome da meta
+                </label>
+
+                <input
+                  id="goal-title"
+                  type="text"
+                  required
+                  minLength={2}
+                  maxLength={100}
+                  autoFocus
+                  value={form.title}
+                  onChange={(event) =>
+                    changeField(
+                      'title',
+                      event.target.value,
+                    )
+                  }
+                  placeholder="Ex.: Comprar notebook"
+                  className={inputClass}
+                />
+              </div>
+
+              {[
+                {
+                  field: 'targetAmount' as const,
+                  label: 'Valor desejado (R$)',
+                  min: '0.01',
+                },
+                {
+                  field: 'currentAmount' as const,
+                  label: 'Valor já guardado (R$)',
+                  min: '0',
+                },
+                {
+                  field: 'monthlyAmount' as const,
+                  label:
+                    'Quanto pretende guardar por mês? (R$)',
+                  min: '0',
+                },
+              ].map(({ field, label, min }) => (
+                <div key={field}>
+                  <label
+                    htmlFor={`goal-${field}`}
+                    className="block text-sm text-[#B3B3B3] mb-2"
+                  >
+                    {label}
+                  </label>
+
+                  <input
+                    id={`goal-${field}`}
+                    type="number"
+                    inputMode="decimal"
+                    required
+                    min={min}
+                    max="9999999999.99"
+                    step="0.01"
+                    value={form[field]}
+                    onChange={(event) =>
+                      changeField(
+                        field,
+                        event.target.value,
+                      )
+                    }
+                    className={inputClass}
+                  />
+                </div>
+              ))}
+
+              <div>
+                <label
+                  htmlFor="goal-deadline"
+                  className="block text-sm text-[#B3B3B3] mb-2"
+                >
+                  Prazo
+                </label>
+
+                <input
+                  id="goal-deadline"
+                  type="date"
+                  required
+                  min={
+                    form.id
+                      ? undefined
+                      : localDateValue(new Date())
+                  }
+                  value={form.deadline}
+                  onChange={(event) =>
+                    changeField(
+                      'deadline',
+                      event.target.value,
+                    )
+                  }
+                  className={inputClass}
+                />
+              </div>
+
+              <p className="text-xs text-[#B3B3B3]">
+                O aporte mensal é um planejamento.
+                Atualize o valor guardado conforme suas
+                contribuições reais.
+              </p>
+            </fieldset>
+
+            {formError && (
+              <p
+                role="alert"
+                className="text-red-300 text-sm mt-4"
+              >
+                {formError}
+              </p>
+            )}
+
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                onClick={closeForm}
+                disabled={saving}
+                className="flex-1 border border-white/10 rounded-xl py-3 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="submit"
+                disabled={saving}
+                className="flex-1 flex items-center justify-center gap-2 bg-[#4ADE80] text-black rounded-xl py-3 font-semibold disabled:opacity-50"
+              >
+                {saving && (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                )}
+
+                {saving
+                  ? 'Salvando…'
+                  : form.id
+                    ? 'Salvar'
+                    : 'Criar meta'}
+              </button>
+            </div>
+          </form>
+        )}
+      </dialog>
+
+      <nav
+        aria-label="Navegação principal"
+        className="fixed bottom-0 left-0 right-0 bg-[#1E1E1E] border-t border-white/10"
+      >
+        <div className="max-w-5xl mx-auto grid grid-cols-5 px-3 py-3">
+          {navigation.map(
+            ({ screen, label, icon: Icon }) => (
+              <button
+                key={screen}
+                type="button"
+                aria-current={
+                  screen === 'goals'
+                    ? 'page'
+                    : undefined
+                }
+                onClick={() => onNavigate(screen)}
+                className={`flex flex-col items-center gap-1 ${
+                  screen === 'goals'
+                    ? 'text-[#4ADE80]'
+                    : 'text-[#B3B3B3]'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-xs">
+                  {label}
+                </span>
+              </button>
+            ),
+          )}
         </div>
       </nav>
     </div>

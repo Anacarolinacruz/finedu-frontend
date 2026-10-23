@@ -1,5 +1,10 @@
+import type { LucideIcon } from 'lucide-react';
 import { ArrowLeft, Lock, Bell, Shield, Moon, Sun, HelpCircle, LogOut, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
+
+type SettingsItem =
+  | { icon: LucideIcon; label: string; toggle?: false; action: () => void }
+  | { icon: LucideIcon; label: string; toggle: true; value: boolean; onChange: () => void };
 
 interface SettingsScreenProps {
   onBack: () => void;
@@ -10,7 +15,7 @@ export default function SettingsScreen({ onBack, onLogout }: SettingsScreenProps
   const [darkMode, setDarkMode] = useState(true);
   const [notifications, setNotifications] = useState(true);
 
-  const settingsSections = [
+  const settingsSections: { title: string; items: SettingsItem[] }[] = [
     {
       title: 'Conta',
       items: [

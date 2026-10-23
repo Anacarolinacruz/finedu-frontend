@@ -1,279 +1,720 @@
-import { useState } from 'react';
-import { ArrowLeft, DollarSign, Calendar, TrendingUp, Home, BookOpen, Target, User } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Tooltip } from 'recharts';
+import { getGoalDeadlineInfo } from '../utils/goalDeadline';
+import { useEffect, useState } from 'react';
+import {
+  ArrowLeft,
+  Loader2,
+  Home,
+  BookOpen,
+  TrendingUp,
+  Target,
+  User,
+} from 'lucide-react';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  CartesianGrid,
+  Tooltip,
+} from 'recharts';
+
+import { getMarketRates } from '../services/api';
+import type { Goal, MarketRates } from '../services/api';
 
 interface SimulatorScreenProps {
   onBack: () => void;
   onNavigate: (screen: string) => void;
+  goal?: Goal | null;
 }
 
-export default function SimulatorScreen({ onBack, onNavigate }: SimulatorScreenProps) {
-  const [initialValue, setInitialValue] = useState('1000');
-  const [monthlyContribution, setMonthlyContribution] = useState('200');
-  const [period, setPeriod] = useState('12');
-  const [investmentType, setInvestmentType] = useState('cdb');
+type InvestmentType = keyof MarketRates;
 
-  const rates = {
-    poupanca: 0.5,
-    cdb: 0.9,
-    lci: 0.8,
-    tesouro: 1.0,
-    acoes: 1.5,
-  };
+const investmentTypes: InvestmentType[] = [
+  'poupanca',
+  'cdb',
+  'lci',
+];
 
-  const investmentTypes = [
-    { id: 'poupanca', name: 'Poupança', rate: '0,5% a.m.', risk: 'Baixo' },
-    { id: 'cdb', name: 'CDB', rate: '0,9% a.m.', risk: 'Baixo' },
-    { id: 'lci', name: 'LCI/LCA', rate: '0,8% a.m.', risk: 'Baixo' },
-    { id: 'tesouro', name: 'Tesouro Direto', rate: '1,0% a.m.', risk: 'Médio' },
-    { id: 'acoes', name: 'Ações', rate: '1,5% a.m.', risk: 'Alto' },
-  ];
+const money = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+});
 
-  const calculateInvestment = () => {
-    const initial = parseFloat(initialValue) || 0;
-    const monthly = parseFloat(monthlyContribution) || 0;
-    const months = parseInt(period) || 1;
-    const rate = rates[investmentType as keyof typeof rates] / 100;
+const inputClass =
+  'w-full bg-[#0F0F0F] border border-white/10 rounded-xl ' +
+  'px-4 py-3 text-white focus:border-[#4ADE80] focus:outline-none';
 
-    const data = [];
-    let accumulated = initial;
-    let totalContributed = initial;
+function formatPercent(value: number) {
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
 
-    for (let i = 0; i <= months; i++) {
-      if (i > 0) {
-        accumulated = accumulated * (1 + rate) + monthly;
-        totalContributed += monthly;
+function formatReferenceDate(value: string | null) {
+  if (!value) return 'Não disponível';
+
+  const [year, month, day] = value.split('-');
+  return `${day}/${month}/${year}`;
+}
+
+export default function SimulatorScreen({
+  onBack,
+  onNavigate,
+  goal = null,
+}: SimulatorScreenProps) {
+  const [initialValue, setInitialValue] = useState(() =>
+    String(goal?.currentAmount ?? 1000),
+  );
+
+  const [monthlyContribution, setMonthlyContribution] =
+    useState(() => String(goal?.monthlyAmount ?? 200));
+
+  const [period, setPeriod] = useState(() => {
+    if (!goal) return '12';
+
+    const months = getGoalDeadlineInfo(goal.deadline).months;
+
+    return months > 0 ? String(months) : '';
+  });
+
+  const [investmentType, setInvestmentType] =
+    useState<InvestmentType>('cdb');
+
+  const [rates, setRates] =
+    useState<MarketRates | null>(null);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [retry, setRetry] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadRates() {
+      setLoading(true);
+      setError('');
+      setRates(null);
+
+      try {
+        const result = await getMarketRates(
+          controller.signal,
+        );
+
+        if (!controller.signal.aborted) {
+          setRates(result);
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setError(
+            error instanceof Error
+              ? error.message
+              : 'Não foi possível carregar as taxas.',
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
+    }
+
+    void loadRates();
+
+    return () => controller.abort();
+  }, [retry]);
+
+  const selectedRate = rates?.[investmentType];
+  const monthlyPercent = selectedRate?.monthlyPercent;
+
+  const initial = Number(initialValue);
+  const monthly = Number(monthlyContribution);
+  const months = Number(period);
+
+  const validInputs =
+    initialValue.trim() !== '' &&
+    monthlyContribution.trim() !== '' &&
+    period.trim() !== '' &&
+    Number.isFinite(initial) &&
+    Number.isFinite(monthly) &&
+    Number.isInteger(months) &&
+    initial >= 0 &&
+    initial <= 9999999999.99 &&
+    monthly >= 0 &&
+    monthly <= 9999999999.99 &&
+    months >= 1 &&
+    months <= 600;
+
+  const canSimulate =
+    !loading &&
+    !error &&
+    validInputs &&
+    selectedRate?.available === true &&
+    monthlyPercent !== null &&
+    monthlyPercent !== undefined &&
+    Number.isFinite(monthlyPercent);
+
+  const result = (() => {
+    if (!canSimulate || monthlyPercent == null) {
+      return null;
+    }
+
+    const rate = monthlyPercent / 100;
+
+    let accumulated = initial;
+    let contributed = initial;
+
+    const data = [
+      {
+        month: 0,
+        value: accumulated,
+        contributed,
+      },
+    ];
+
+    for (let month = 1; month <= months; month++) {
+      // Aportes realizados no final de cada mês.
+      accumulated = accumulated * (1 + rate) + monthly;
+      contributed += monthly;
 
       data.push({
-        month: i,
+        month,
         value: accumulated,
-        contributed: totalContributed,
+        contributed,
       });
+    }
+
+    if (!Number.isFinite(accumulated)) {
+      return null;
     }
 
     return {
       data,
       finalValue: accumulated,
-      totalContributed,
-      earnings: accumulated - totalContributed,
+      totalContributed: contributed,
+      earnings: accumulated - contributed,
     };
-  };
+  })();
 
-  const result = calculateInvestment();
+  const originalGoalMonths = goal
+    ? getGoalDeadlineInfo(goal.deadline).months
+    : null;
+
+  const navigation = [
+    { screen: 'dashboard', label: 'Home', icon: Home },
+    { screen: 'courses', label: 'Cursos', icon: BookOpen },
+    {
+      screen: 'simulator',
+      label: 'Investir',
+      icon: TrendingUp,
+    },
+    { screen: 'goals', label: 'Metas', icon: Target },
+    { screen: 'profile', label: 'Perfil', icon: User },
+  ];
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] pb-24">
-      <div className="bg-[#1E1E1E] px-6 pt-8 pb-6">
-        <div className="flex items-center gap-4 mb-6">
-          <button onClick={onBack} className="text-[#B3B3B3] hover:text-white transition-colors">
+    <div className="min-h-screen bg-[#0F0F0F] text-white pb-28">
+      <header className="bg-[#1E1E1E] px-6 pt-8 pb-6">
+        <div className="max-w-5xl mx-auto flex items-center gap-4">
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Voltar"
+            className="text-[#B3B3B3] hover:text-white"
+          >
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-2xl font-bold text-white">Simulador de Investimentos</h1>
+
+          <h1 className="text-2xl font-bold">
+            Simulador de Investimentos
+          </h1>
         </div>
-      </div>
+      </header>
 
-      <div className="px-6 pt-6 space-y-6">
-        <div className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-5">
-          <h3 className="text-white font-semibold mb-4">Dados do Investimento</h3>
+      <main className="max-w-5xl mx-auto px-6 pt-6 space-y-6">
+        {goal && (
+          <section className="bg-[#4ADE80]/10 border border-[#4ADE80]/30 rounded-2xl p-5">
+            <p className="text-sm text-[#B3B3B3] mb-1">
+              Simulação da meta
+            </p>
 
-          <div className="space-y-4">
+            <h2 className="text-xl font-bold">
+              {goal.emoji} {goal.title}
+            </h2>
+
+            <p className="text-sm text-[#B3B3B3] mt-2">
+              Objetivo: {money.format(goal.targetAmount)}
+              {' · '}
+              Prazo cadastrado:{' '}
+              {formatReferenceDate(goal.deadline)}
+            </p>
+
+            <p className="text-xs text-[#B3B3B3] mt-3">
+              Os campos foram preenchidos com os dados da
+              meta. Alterações nesta simulação não modificam
+              o cadastro. O período considera meses completos.
+            </p>
+
+            {originalGoalMonths === 0 && (
+              <p className="text-sm text-yellow-300 mt-3">
+                O prazo está vencido ou não permite um mês
+                completo. Informe um novo período abaixo para
+                explorar outro cenário.
+              </p>
+            )}
+
+            {originalGoalMonths !== null &&
+              originalGoalMonths > 600 && (
+                <p className="text-sm text-yellow-300 mt-3">
+                  O prazo ultrapassa o limite de 600 meses.
+                  Informe um período entre 1 e 600 meses.
+                </p>
+              )}
+          </section>
+        )}
+
+        <section className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-5">
+          <h2 className="font-semibold mb-4">
+            Dados da simulação
+          </h2>
+
+          <div className="grid gap-4 sm:grid-cols-3">
             <div>
-              <label className="text-[#B3B3B3] text-sm mb-2 block">Valor Inicial (R$)</label>
-              <div className="relative">
-                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#B3B3B3]" />
-                <input
-                  type="number"
-                  value={initialValue}
-                  onChange={(e) => setInitialValue(e.target.value)}
-                  className="w-full bg-[#0F0F0F] border border-white/10 rounded-xl px-12 py-3 text-white focus:border-[#4ADE80] focus:outline-none transition-colors"
-                  placeholder="0"
-                />
-              </div>
+              <label
+                htmlFor="initial-value"
+                className="block text-sm text-[#B3B3B3] mb-2"
+              >
+                Valor inicial (R$)
+              </label>
+
+              <input
+                id="initial-value"
+                type="number"
+                inputMode="decimal"
+                min="0"
+                max="9999999999.99"
+                step="0.01"
+                value={initialValue}
+                onChange={(event) =>
+                  setInitialValue(event.target.value)
+                }
+                className={inputClass}
+              />
             </div>
 
             <div>
-              <label className="text-[#B3B3B3] text-sm mb-2 block">Aporte Mensal (R$)</label>
-              <div className="relative">
-                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#B3B3B3]" />
-                <input
-                  type="number"
-                  value={monthlyContribution}
-                  onChange={(e) => setMonthlyContribution(e.target.value)}
-                  className="w-full bg-[#0F0F0F] border border-white/10 rounded-xl px-12 py-3 text-white focus:border-[#4ADE80] focus:outline-none transition-colors"
-                  placeholder="0"
-                />
-              </div>
+              <label
+                htmlFor="monthly-contribution"
+                className="block text-sm text-[#B3B3B3] mb-2"
+              >
+                Aporte mensal (R$)
+              </label>
+
+              <input
+                id="monthly-contribution"
+                type="number"
+                inputMode="decimal"
+                min="0"
+                max="9999999999.99"
+                step="0.01"
+                value={monthlyContribution}
+                onChange={(event) =>
+                  setMonthlyContribution(
+                    event.target.value,
+                  )
+                }
+                className={inputClass}
+              />
             </div>
 
             <div>
-              <label className="text-[#B3B3B3] text-sm mb-2 block">Período (meses)</label>
-              <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#B3B3B3]" />
-                <input
-                  type="number"
-                  value={period}
-                  onChange={(e) => setPeriod(e.target.value)}
-                  className="w-full bg-[#0F0F0F] border border-white/10 rounded-xl px-12 py-3 text-white focus:border-[#4ADE80] focus:outline-none transition-colors"
-                  placeholder="12"
-                />
-              </div>
-            </div>
+              <label
+                htmlFor="simulation-period"
+                className="block text-sm text-[#B3B3B3] mb-2"
+              >
+                Período em meses
+              </label>
 
-            <div>
-              <label className="text-[#B3B3B3] text-sm mb-2 block">Tipo de Investimento</label>
-              <div className="space-y-2">
-                {investmentTypes.map((type) => (
+              <input
+                id="simulation-period"
+                type="number"
+                min="1"
+                max="600"
+                step="1"
+                value={period}
+                onChange={(event) =>
+                  setPeriod(event.target.value)
+                }
+                placeholder="Informe o período"
+                className={inputClass}
+              />
+            </div>
+          </div>
+
+          {!validInputs && (
+            <p
+              role="alert"
+              className="text-yellow-300 text-sm mt-4"
+            >
+              Informe valores entre zero e
+              R$ 9.999.999.999,99 e um prazo inteiro entre
+              1 e 600 meses.
+            </p>
+          )}
+        </section>
+
+        <section className="space-y-3">
+          <div className="flex flex-wrap justify-between items-center gap-3">
+            <h2 className="font-semibold">
+              Referências para simulação
+            </h2>
+
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() =>
+                setRetry((value) => value + 1)
+              }
+              className="text-sm text-[#4ADE80] disabled:opacity-50"
+            >
+              Consultar novamente
+            </button>
+          </div>
+
+          {loading ? (
+            <div
+              role="status"
+              className="flex items-center gap-3 py-8 text-[#B3B3B3]"
+            >
+              <Loader2 className="w-5 h-5 animate-spin text-[#4ADE80]" />
+              Consultando referências de mercado…
+            </div>
+          ) : error ? (
+            <p
+              role="alert"
+              className="bg-[#1E1E1E] border border-red-400/30 rounded-xl p-4 text-red-300"
+            >
+              {error}
+            </p>
+          ) : rates ? (
+            <div className="grid gap-3 md:grid-cols-3">
+              {investmentTypes.map((id) => {
+                const item = rates[id];
+
+                const available =
+                  item.available &&
+                  item.monthlyPercent !== null &&
+                  Number.isFinite(
+                    item.monthlyPercent,
+                  );
+
+                return (
                   <button
-                    key={type.id}
-                    onClick={() => setInvestmentType(type.id)}
-                    className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
-                      investmentType === type.id
+                    key={id}
+                    type="button"
+                    disabled={!available}
+                    aria-pressed={
+                      investmentType === id
+                    }
+                    onClick={() =>
+                      setInvestmentType(id)
+                    }
+                    className={`text-left rounded-2xl border p-5 transition-colors disabled:opacity-60 ${
+                      investmentType === id
                         ? 'bg-[#4ADE80]/10 border-[#4ADE80]'
-                        : 'bg-[#0F0F0F] border-white/10 hover:border-[#4ADE80]/50'
+                        : 'bg-[#1E1E1E] border-white/10'
                     }`}
                   >
-                    <div className="text-left">
-                      <p className="text-white font-medium">{type.name}</p>
-                      <p className="text-xs text-[#B3B3B3]">Risco {type.risk}</p>
-                    </div>
-                    <span className={`text-sm font-medium ${
-                      investmentType === type.id ? 'text-[#4ADE80]' : 'text-[#B3B3B3]'
-                    }`}>
-                      {type.rate}
-                    </span>
+                    <h3 className="font-bold text-lg">
+                      {item.name}
+                    </h3>
+
+                    <p className="text-sm text-[#B3B3B3] mt-1">
+                      {item.benchmark}
+                    </p>
+
+                    <p className="text-xl font-bold text-[#4ADE80] mt-4">
+                      {available &&
+                      item.monthlyPercent !== null
+                        ? `≈ ${formatPercent(
+                            item.monthlyPercent,
+                          )}% a.m.*`
+                        : 'Indisponível'}
+                    </p>
+
+                    <p className="text-xs text-[#B3B3B3] mt-3">
+                      Referência:{' '}
+                      {formatReferenceDate(
+                        item.referenceDate,
+                      )}
+                    </p>
+
+                    <p className="text-xs text-[#B3B3B3] mt-1">
+                      {item.source}
+                    </p>
+
+                    {item.fetchedAt && (
+                      <p className="text-xs text-[#B3B3B3] mt-1">
+                        Consulta:{' '}
+                        {new Date(
+                          item.fetchedAt,
+                        ).toLocaleString('pt-BR')}
+                      </p>
+                    )}
+
+                    {item.stale && (
+                      <p className="text-xs text-yellow-300 mt-2">
+                        Atualização indisponível.
+                        Exibindo a última referência
+                        consultada.
+                      </p>
+                    )}
+
+                    <p className="text-xs text-[#B3B3B3] mt-3">
+                      *{item.note}
+                    </p>
                   </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </section>
+
+        <section className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-5">
+          <h2 className="font-semibold mb-4">
+            Resultado da simulação
+          </h2>
+
+          {result ? (
+            <>
+              <p className="text-sm text-[#B3B3B3] mb-5">
+                {selectedRate?.name} · taxa de referência
+                mantida constante durante os {months}{' '}
+                meses.
+              </p>
+
+              <div className="grid gap-3 sm:grid-cols-3 mb-6">
+                {[
+                  {
+                    label: 'Saldo bruto projetado',
+                    value: result.finalValue,
+                  },
+                  {
+                    label:
+                      'Total de recursos aplicados',
+                    value: result.totalContributed,
+                  },
+                  {
+                    label:
+                      'Rendimento bruto estimado',
+                    value: result.earnings,
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="bg-[#0F0F0F] rounded-xl p-4"
+                  >
+                    <p className="text-xs text-[#B3B3B3] mb-2">
+                      {item.label}
+                    </p>
+
+                    <p className="font-bold text-lg text-[#4ADE80] break-words">
+                      {money.format(item.value)}
+                    </p>
+                  </div>
                 ))}
               </div>
-            </div>
-          </div>
-        </div>
 
-        <div className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-5">
-          <h3 className="text-white font-semibold mb-4">Resultado da Simulação</h3>
+              {goal && (
+                <div className="bg-[#0F0F0F] rounded-xl p-4 mb-6">
+                  <p className="text-sm text-[#B3B3B3]">
+                    Comparação com o objetivo de{' '}
+                    {money.format(
+                      goal.targetAmount,
+                    )}
+                  </p>
 
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <div className="bg-[#0F0F0F] rounded-xl p-4">
-              <p className="text-[#B3B3B3] text-xs mb-1">Valor Final</p>
-              <p className="text-[#4ADE80] text-xl font-bold">
-                R$ {result.finalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <p className="text-sm text-[#B3B3B3] mt-1">
+                    Período simulado: {months}{' '}
+                    {months === 1 ? 'mês' : 'meses'}.
+                  </p>
+
+                  <p
+                    className={`font-semibold mt-2 ${
+                      result.finalValue >=
+                      goal.targetAmount
+                        ? 'text-[#4ADE80]'
+                        : 'text-yellow-300'
+                    }`}
+                  >
+                    {result.finalValue >=
+                    goal.targetAmount
+                      ? `A projeção alcança o objetivo, com excedente de ${money.format(
+                          result.finalValue -
+                            goal.targetAmount,
+                        )}.`
+                      : `Na projeção, ainda faltariam ${money.format(
+                          goal.targetAmount -
+                            result.finalValue,
+                        )}.`}
+                  </p>
+
+                  <p className="text-xs text-[#B3B3B3] mt-2">
+                    Comparação baseada nos valores e
+                    no período informados. O resultado
+                    futuro pode variar.
+                  </p>
+                </div>
+              )}
+
+              <ResponsiveContainer
+                width="100%"
+                height={240}
+              >
+                <LineChart
+                  data={result.data}
+                  margin={{
+                    top: 10,
+                    right: 10,
+                    bottom: 10,
+                    left: 10,
+                  }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#333"
+                  />
+
+                  <XAxis
+                    dataKey="month"
+                    stroke="#B3B3B3"
+                    fontSize={12}
+                  />
+
+                  <YAxis
+                    stroke="#B3B3B3"
+                    fontSize={12}
+                    width={75}
+                    tickFormatter={(
+                      value: number,
+                    ) =>
+                      value.toLocaleString(
+                        'pt-BR',
+                        {
+                          notation: 'compact',
+                          maximumFractionDigits: 1,
+                        },
+                      )
+                    }
+                  />
+
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1E1E1E',
+                      border: '1px solid #444',
+                      borderRadius: 12,
+                      color: '#fff',
+                    }}
+                    labelFormatter={(label) =>
+                      `Mês ${label}`
+                    }
+                    formatter={(value) =>
+                      money.format(Number(value))
+                    }
+                  />
+
+                  <Line
+                    name="Saldo bruto projetado"
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#4ADE80"
+                    strokeWidth={3}
+                    dot={false}
+                  />
+
+                  <Line
+                    name="Recursos aplicados"
+                    type="monotone"
+                    dataKey="contributed"
+                    stroke="#B3B3B3"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+
+              <p className="text-xs text-[#B3B3B3] mt-4">
+                Verde: saldo projetado. Cinza:
+                valor inicial mais aportes.
               </p>
-            </div>
-            <div className="bg-[#0F0F0F] rounded-xl p-4">
-              <p className="text-[#B3B3B3] text-xs mb-1">Rentabilidade</p>
-              <p className="text-white text-xl font-bold">
-                R$ {result.earnings.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-            </div>
-          </div>
+            </>
+          ) : (
+            <p className="text-sm text-[#B3B3B3]">
+              Preencha valores válidos e selecione uma
+              referência disponível para visualizar
+              a projeção.
+            </p>
+          )}
+        </section>
 
-          <div className="bg-[#0F0F0F] rounded-xl p-4 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-[#B3B3B3] text-sm">Total Investido</p>
-              <p className="text-white font-semibold">
-                R$ {result.totalContributed.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="flex items-center justify-between">
-              <p className="text-[#B3B3B3] text-sm">Rendimento</p>
-              <p className="text-[#4ADE80] font-semibold">
-                {((result.earnings / result.totalContributed) * 100).toFixed(2)}%
-              </p>
-            </div>
-          </div>
+        <section className="bg-[#4ADE80]/10 border border-[#4ADE80]/30 rounded-2xl p-4">
+          <h2 className="text-[#4ADE80] font-semibold mb-2">
+            Como interpretar
+          </h2>
 
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={result.data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1E1E1E" />
-              <XAxis
-                dataKey="month"
-                stroke="#B3B3B3"
-                fontSize={12}
-                label={{ value: 'Meses', position: 'insideBottom', offset: -5, fill: '#B3B3B3' }}
-              />
-              <YAxis
-                stroke="#B3B3B3"
-                fontSize={12}
-                tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#1E1E1E',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '12px',
-                  color: '#fff'
-                }}
-                formatter={(value: any) => [`R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Valor']}
-              />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="#4ADE80"
-                strokeWidth={3}
-                dot={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="contributed"
-                stroke="#B3B3B3"
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <p className="text-sm text-[#B3B3B3]">
+            Projeção educacional com aportes no final de
+            cada mês e taxa constante. Os valores são
+            brutos, sem descontar impostos, tarifas ou
+            inflação. As taxas futuras podem mudar.
+            Na poupança, esta projeção mensal simplifica
+            as regras de aniversário dos depósitos.
+          </p>
 
-          <div className="flex items-center gap-4 mt-4 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#4ADE80]" />
-              <span className="text-[#B3B3B3]">Com rendimento</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-0.5 bg-[#B3B3B3]" />
-              <span className="text-[#B3B3B3]">Sem rendimento</span>
-            </div>
-          </div>
-        </div>
+          {goal && (
+            <p className="text-sm text-[#B3B3B3] mt-3">
+              Esta simulação não atualiza o saldo
+              guardado nem o progresso da sua meta.
+            </p>
+          )}
+        </section>
 
-        <div className="bg-[#4ADE80]/10 border border-[#4ADE80] rounded-2xl p-4">
-          <div className="flex gap-3">
-            <TrendingUp className="w-5 h-5 text-[#4ADE80] flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-[#4ADE80] font-medium mb-1">Dica de Investimento</p>
-              <p className="text-[#4ADE80]/80 text-sm">
-                {investmentType === 'poupanca' && 'A poupança é segura, mas considere opções com melhor rentabilidade como CDB ou Tesouro Direto.'}
-                {investmentType === 'cdb' && 'CDB é uma ótima opção para iniciantes. Escolha bancos com boa reputação e rendimento acima de 100% do CDI.'}
-                {investmentType === 'lci' && 'LCI/LCA são isentos de IR! Ótima opção para aumentar sua rentabilidade líquida.'}
-                {investmentType === 'tesouro' && 'Tesouro Direto é seguro e acessível. Diversifique entre Selic, IPCA e Prefixado.'}
-                {investmentType === 'acoes' && 'Ações têm maior potencial de retorno, mas também mais risco. Estude antes de investir e diversifique.'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#1E1E1E] border-t border-white/10 px-6 py-3">
-        <div className="flex items-center justify-around max-w-md mx-auto">
-          <button onClick={() => onNavigate('dashboard')} className="flex flex-col items-center gap-1 text-[#B3B3B3] hover:text-white transition-colors">
-            <Home className="w-6 h-6" />
-            <span className="text-xs">Home</span>
-          </button>
-          <button onClick={() => onNavigate('courses')} className="flex flex-col items-center gap-1 text-[#B3B3B3] hover:text-white transition-colors">
-            <BookOpen className="w-6 h-6" />
-            <span className="text-xs">Cursos</span>
-          </button>
-          <button onClick={() => onNavigate('simulator')} className="flex flex-col items-center gap-1 text-[#4ADE80]">
-            <TrendingUp className="w-6 h-6" />
-            <span className="text-xs">Investir</span>
-          </button>
-          <button onClick={() => onNavigate('goals')} className="flex flex-col items-center gap-1 text-[#B3B3B3] hover:text-white transition-colors">
-            <Target className="w-6 h-6" />
-            <span className="text-xs">Metas</span>
-          </button>
-          <button onClick={() => onNavigate('profile')} className="flex flex-col items-center gap-1 text-[#B3B3B3] hover:text-white transition-colors">
-            <User className="w-6 h-6" />
-            <span className="text-xs">Perfil</span>
-          </button>
+      </main>
+
+      <nav
+        aria-label="Navegação principal"
+        className="fixed bottom-0 left-0 right-0 bg-[#1E1E1E] border-t border-white/10"
+      >
+        <div className="max-w-5xl mx-auto grid grid-cols-5 px-3 py-3">
+          {navigation.map(
+            ({ screen, label, icon: Icon }) => (
+              <button
+                key={screen}
+                type="button"
+                aria-current={
+                  screen === 'simulator'
+                    ? 'page'
+                    : undefined
+                }
+                onClick={() =>
+                  onNavigate(screen)
+                }
+                className={`flex flex-col items-center gap-1 ${
+                  screen === 'simulator'
+                    ? 'text-[#4ADE80]'
+                    : 'text-[#B3B3B3]'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-xs">
+                  {label}
+                </span>
+              </button>
+            ),
+          )}
         </div>
       </nav>
     </div>
