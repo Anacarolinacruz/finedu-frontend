@@ -78,11 +78,11 @@ export default function SignupScreen({
   };
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] p-6">
+    <div className="min-h-screen bg-[#101E35] p-6">
       <div className="max-w-md mx-auto pt-8">
         <button
           onClick={onBack}
-          className="mb-8 text-[#B3B3B3] hover:text-white transition-colors flex items-center gap-2"
+          className="mb-8 text-[#ADBFCC] hover:text-white transition-colors flex items-center gap-2"
         >
           <ArrowLeft className="w-5 h-5" />
           Voltar
@@ -93,14 +93,14 @@ export default function SignupScreen({
             Criar conta
           </h1>
 
-          <p className="text-[#B3B3B3]">
+          <p className="text-[#ADBFCC]">
             Comece sua jornada financeira
           </p>
         </div>
 
         <div className="space-y-4 mb-6">
           <div className="relative">
-            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#B3B3B3]" />
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#ADBFCC]" />
 
             <input
               type="text"
@@ -108,12 +108,12 @@ export default function SignupScreen({
               value={name}
               onChange={(event) => setName(event.target.value)}
               autoComplete="name"
-              className="w-full bg-[#1E1E1E] border border-white/10 rounded-2xl px-12 py-4 text-white placeholder:text-[#B3B3B3] focus:border-[#4ADE80] focus:outline-none transition-colors"
+              className="w-full bg-[#172B43] border border-white/10 rounded-2xl px-12 py-4 text-white placeholder:text-[#ADBFCC] focus:border-[#E6BB66] focus:outline-none transition-colors"
             />
           </div>
 
           <div className="relative">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#B3B3B3]" />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#ADBFCC]" />
 
             <input
               type="email"
@@ -121,12 +121,12 @@ export default function SignupScreen({
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               autoComplete="email"
-              className="w-full bg-[#1E1E1E] border border-white/10 rounded-2xl px-12 py-4 text-white placeholder:text-[#B3B3B3] focus:border-[#4ADE80] focus:outline-none transition-colors"
+              className="w-full bg-[#172B43] border border-white/10 rounded-2xl px-12 py-4 text-white placeholder:text-[#ADBFCC] focus:border-[#E6BB66] focus:outline-none transition-colors"
             />
           </div>
 
           <div className="relative">
-            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#B3B3B3]" />
+            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#ADBFCC]" />
 
             <input
               type="number"
@@ -135,12 +135,12 @@ export default function SignupScreen({
               onChange={(event) => setAge(event.target.value)}
               min={13}
               max={120}
-              className="w-full bg-[#1E1E1E] border border-white/10 rounded-2xl px-12 py-4 text-white placeholder:text-[#B3B3B3] focus:border-[#4ADE80] focus:outline-none transition-colors"
+              className="w-full bg-[#172B43] border border-white/10 rounded-2xl px-12 py-4 text-white placeholder:text-[#ADBFCC] focus:border-[#E6BB66] focus:outline-none transition-colors"
             />
           </div>
 
           <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#B3B3B3]" />
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#ADBFCC]" />
 
             <input
               type="password"
@@ -148,12 +148,12 @@ export default function SignupScreen({
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="new-password"
-              className="w-full bg-[#1E1E1E] border border-white/10 rounded-2xl px-12 py-4 text-white placeholder:text-[#B3B3B3] focus:border-[#4ADE80] focus:outline-none transition-colors"
+              className="w-full bg-[#172B43] border border-white/10 rounded-2xl px-12 py-4 text-white placeholder:text-[#ADBFCC] focus:border-[#E6BB66] focus:outline-none transition-colors"
             />
           </div>
 
           <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#B3B3B3]" />
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#ADBFCC]" />
 
             <input
               type="password"
@@ -163,7 +163,7 @@ export default function SignupScreen({
                 setConfirmPassword(event.target.value)
               }
               autoComplete="new-password"
-              className="w-full bg-[#1E1E1E] border border-white/10 rounded-2xl px-12 py-4 text-white placeholder:text-[#B3B3B3] focus:border-[#4ADE80] focus:outline-none transition-colors"
+              className="w-full bg-[#172B43] border border-white/10 rounded-2xl px-12 py-4 text-white placeholder:text-[#ADBFCC] focus:border-[#E6BB66] focus:outline-none transition-colors"
             />
           </div>
         </div>
@@ -178,18 +178,18 @@ export default function SignupScreen({
           whileTap={{ scale: 0.98 }}
           onClick={handleSignup}
           disabled={loading}
-          className="w-full bg-[#4ADE80] text-[#0F0F0F] px-8 py-4 rounded-2xl font-semibold hover:bg-[#22C55E] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full bg-[#E6BB66] text-[#101E35] px-8 py-4 rounded-2xl font-semibold hover:bg-[#2BAAA0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? 'Criando conta...' : 'Criar conta'}
         </motion.button>
 
-        <p className="text-xs text-[#B3B3B3] text-center mt-6">
+        <p className="text-xs text-[#ADBFCC] text-center mt-6">
           Ao criar uma conta, você concorda com nossos{' '}
-          <span className="text-[#4ADE80]">
+          <span className="text-[#E6BB66]">
             Termos de Uso
           </span>{' '}
           e{' '}
-          <span className="text-[#4ADE80]">
+          <span className="text-[#E6BB66]">
             Política de Privacidade
           </span>
         </p>

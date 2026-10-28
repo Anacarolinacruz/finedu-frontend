@@ -547,3 +547,27 @@ export async function getMarketRates(
 
   return data.rates;
 }
+// =========================================
+// Alteração de senha do usuário autenticado
+// =========================================
+
+export interface ChangePasswordInput {
+  currentPassword: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export async function changePassword(
+  input: ChangePasswordInput,
+): Promise<string> {
+  const result = await request<unknown>(
+    '/auth/change-password',
+    {
+      method: 'POST',
+      body: JSON.stringify(input),
+    },
+    true,
+  );
+
+  return result.message;
+}

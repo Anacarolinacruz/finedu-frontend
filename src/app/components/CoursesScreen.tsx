@@ -174,14 +174,14 @@ export default function CoursesScreen({
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white pb-28">
+    <div className="min-h-screen bg-[#101E35] text-white pb-28">
       <main className="max-w-5xl mx-auto px-5 pt-6">
         <header className="flex items-center justify-between gap-3 mb-8">
           <button
             type="button"
             onClick={handleBack}
             aria-label="Voltar"
-            className="w-11 h-11 shrink-0 rounded-full bg-[#1E1E1E] border border-white/10 flex items-center justify-center"
+            className="w-11 h-11 shrink-0 rounded-full bg-[#172B43] border border-white/10 flex items-center justify-center"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -191,41 +191,41 @@ export default function CoursesScreen({
               {selectedTrailId ? 'Sua trilha' : 'Cursos'}
             </h1>
 
-            <p className="text-sm text-[#B3B3B3]">
+            <p className="text-sm text-[#ADBFCC]">
               Aprenda no seu ritmo
             </p>
           </div>
 
-          <BookOpen className="w-6 h-6 shrink-0 text-[#4ADE80]" />
+          <BookOpen className="w-6 h-6 shrink-0 text-[#E6BB66]" />
         </header>
 
         {loading ? (
           <div
             role="status"
-            className="flex items-center justify-center gap-3 py-16 text-[#B3B3B3]"
+            className="flex items-center justify-center gap-3 py-16 text-[#ADBFCC]"
           >
-            <Loader2 className="w-6 h-6 animate-spin text-[#4ADE80]" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#E6BB66]" />
             Carregando…
           </div>
         ) : error ? (
           <section
             role="alert"
-            className="bg-[#1E1E1E] border border-red-400/30 rounded-2xl p-6"
+            className="bg-[#172B43] border border-red-400/30 rounded-2xl p-6"
           >
             <p className="mb-4">{error}</p>
 
             <button
               type="button"
               onClick={() => setRetry((value) => value + 1)}
-              className="bg-[#4ADE80] text-[#0F0F0F] rounded-xl px-5 py-3 font-semibold"
+              className="bg-[#E6BB66] text-[#101E35] rounded-xl px-5 py-3 font-semibold"
             >
               Tentar novamente
             </button>
           </section>
         ) : (
           <>
-            <section className="bg-gradient-to-br from-[#193A2B] to-[#14251D] border border-[#4ADE80]/25 rounded-3xl p-6 mb-6">
-              <p className="text-sm text-[#B3B3B3] mb-2">
+            <section className="bg-gradient-to-br from-[#193A2B] to-[#14251D] border border-[#E6BB66]/25 rounded-3xl p-6 mb-6">
+              <p className="text-sm text-[#ADBFCC] mb-2">
                 {selectedTrail
                   ? 'Progresso da trilha'
                   : 'Seu aprendizado'}
@@ -236,7 +236,7 @@ export default function CoursesScreen({
                   'Cada aula é um novo passo'}
               </h2>
 
-              <p className="text-sm text-[#B3B3B3] mb-5">
+              <p className="text-sm text-[#ADBFCC] mb-5">
                 {selectedTrail?.description ??
                   'Explore as trilhas e pratique os conceitos de educação financeira.'}
               </p>
@@ -252,11 +252,11 @@ export default function CoursesScreen({
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
-                  className="h-full bg-[#4ADE80] rounded-full"
+                  className="h-full bg-[#E6BB66] rounded-full"
                 />
               </div>
 
-              <div className="flex justify-between gap-3 mt-2 text-sm text-[#B3B3B3]">
+              <div className="flex justify-between gap-3 mt-2 text-sm text-[#ADBFCC]">
                 <span>
                   {selectedTrail?.completedLessons ??
                     completedLessons}
@@ -269,7 +269,7 @@ export default function CoursesScreen({
               </div>
 
               {selectedTrail?.hasFinalQuiz && (
-                <div className="mt-3 text-sm text-[#B3B3B3] space-y-2">
+                <div className="mt-3 text-sm text-[#ADBFCC] space-y-2">
                   <p>
                     {selectedTrail.answeredQuestions} de{' '}
                     {selectedTrail.totalQuestions}
@@ -282,13 +282,13 @@ export default function CoursesScreen({
                     10%
                   </p>
 
-                  <p className="text-[#4ADE80]">
+                  <p className="text-[#E6BB66]">
                     Até 100 XP nesta trilha
                   </p>
                 </div>
               )}
 
-              <p className="text-xs text-[#B3B3B3] mt-4">
+              <p className="text-xs text-[#ADBFCC] mt-4">
                 Nível {displayedUserProgress.level} ·{' '}
                 {displayedUserProgress.xp} XP acumulados
               </p>
@@ -301,7 +301,7 @@ export default function CoursesScreen({
                 </h2>
 
                 {selectedTrail.lessons.length === 0 ? (
-                  <p className="text-[#B3B3B3]">
+                  <p className="text-[#ADBFCC]">
                     Esta trilha ainda não possui aulas
                     disponíveis.
                   </p>
@@ -316,9 +316,9 @@ export default function CoursesScreen({
                           onClick={() =>
                             onOpenLesson?.(lesson.id)
                           }
-                          className="w-full bg-[#1E1E1E] border border-white/10 rounded-2xl p-4 flex items-center gap-4 text-left hover:border-[#4ADE80]/40 transition-colors disabled:cursor-default"
+                          className="w-full bg-[#172B43] border border-white/10 rounded-2xl p-4 flex items-center gap-4 text-left hover:border-[#E6BB66]/40 transition-colors disabled:cursor-default"
                         >
-                          <div className="w-11 h-11 shrink-0 rounded-full bg-[#4ADE80]/10 text-[#4ADE80] flex items-center justify-center">
+                          <div className="w-11 h-11 shrink-0 rounded-full bg-[#E6BB66]/10 text-[#E6BB66] flex items-center justify-center">
                             {lesson.completed ? (
                               <CheckCircle2 className="w-6 h-6" />
                             ) : (
@@ -333,7 +333,7 @@ export default function CoursesScreen({
                               {lesson.title}
                             </h3>
 
-                            <p className="text-sm text-[#B3B3B3]">
+                            <p className="text-sm text-[#ADBFCC]">
                               {Math.ceil(
                                 lesson.durationSeconds / 60,
                               )}
@@ -344,14 +344,14 @@ export default function CoursesScreen({
                             </p>
 
                             {selectedTrail.hasFinalQuiz && (
-                              <p className="text-xs text-[#4ADE80] mt-1">
+                              <p className="text-xs text-[#E6BB66] mt-1">
                                 20% da trilha · 20 XP na primeira
                                 conclusão
                               </p>
                             )}
                           </div>
 
-                          <ChevronRight className="w-5 h-5 shrink-0 text-[#B3B3B3]" />
+                          <ChevronRight className="w-5 h-5 shrink-0 text-[#ADBFCC]" />
                         </button>
                       ),
                     )}
@@ -374,7 +374,7 @@ export default function CoursesScreen({
                 </h2>
 
                 {trails.length === 0 ? (
-                  <p className="text-[#B3B3B3]">
+                  <p className="text-[#ADBFCC]">
                     Nenhuma trilha disponível no momento.
                   </p>
                 ) : (
@@ -387,12 +387,12 @@ export default function CoursesScreen({
                         onClick={() =>
                           setSelectedTrailId(trail.id)
                         }
-                        className="bg-[#1E1E1E] border border-white/10 rounded-3xl p-5 text-left hover:border-[#4ADE80]/40 transition-colors"
+                        className="bg-[#172B43] border border-white/10 rounded-3xl p-5 text-left hover:border-[#E6BB66]/40 transition-colors"
                       >
                         <div className="flex items-center justify-between mb-4">
-                          <BookOpen className="w-7 h-7 text-[#4ADE80]" />
+                          <BookOpen className="w-7 h-7 text-[#E6BB66]" />
 
-                          <span className="text-xs rounded-full px-3 py-1 bg-[#4ADE80]/10 text-[#4ADE80]">
+                          <span className="text-xs rounded-full px-3 py-1 bg-[#E6BB66]/10 text-[#E6BB66]">
                             {levelLabels[trail.level]}
                           </span>
                         </div>
@@ -401,11 +401,11 @@ export default function CoursesScreen({
                           {trail.title}
                         </h3>
 
-                        <p className="text-sm text-[#B3B3B3] mb-4">
+                        <p className="text-sm text-[#ADBFCC] mb-4">
                           {trail.description}
                         </p>
 
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-[#B3B3B3] mb-4">
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-[#ADBFCC] mb-4">
                           <span>
                             {trail.totalLessons} aulas
                           </span>
@@ -416,7 +416,7 @@ export default function CoursesScreen({
                           </span>
 
                           {trail.hasFinalQuiz && (
-                            <span className="text-[#4ADE80]">
+                            <span className="text-[#E6BB66]">
                               Até 100 XP
                             </span>
                           )}
@@ -424,14 +424,14 @@ export default function CoursesScreen({
 
                         <div className="h-2 bg-white/5 rounded-full overflow-hidden mb-2">
                           <div
-                            className="h-full bg-[#4ADE80]"
+                            className="h-full bg-[#E6BB66]"
                             style={{
                               width: `${trail.progressPercent}%`,
                             }}
                           />
                         </div>
 
-                        <p className="text-xs text-[#B3B3B3] mb-2">
+                        <p className="text-xs text-[#ADBFCC] mb-2">
                           {trail.completedLessons} de{' '}
                           {trail.totalLessons}
                           {' aulas concluídas · '}
@@ -439,14 +439,14 @@ export default function CoursesScreen({
                         </p>
 
                         {trail.hasFinalQuiz && (
-                          <p className="text-xs text-[#B3B3B3] mb-4">
+                          <p className="text-xs text-[#ADBFCC] mb-4">
                             {trail.answeredQuestions} de{' '}
                             {trail.totalQuestions}
                             {' perguntas respondidas'}
                           </p>
                         )}
 
-                        <div className="flex justify-between items-center text-[#4ADE80] font-semibold mt-4">
+                        <div className="flex justify-between items-center text-[#E6BB66] font-semibold mt-4">
                           <span>
                             {trail.status === 'COMPLETED'
                               ? 'Revisar trilha'
@@ -469,7 +469,7 @@ export default function CoursesScreen({
 
       <nav
         aria-label="Navegação principal"
-        className="fixed bottom-0 left-0 right-0 bg-[#1E1E1E] border-t border-white/10"
+        className="fixed bottom-0 left-0 right-0 bg-[#172B43] border-t border-white/10"
       >
         <div className="max-w-5xl mx-auto px-5 py-3 grid grid-cols-5">
           {[
@@ -514,8 +514,8 @@ export default function CoursesScreen({
               }}
               className={`flex flex-col items-center gap-1 ${
                 screen === 'courses'
-                  ? 'text-[#4ADE80]'
-                  : 'text-[#B3B3B3]'
+                  ? 'text-[#E6BB66]'
+                  : 'text-[#ADBFCC]'
               }`}
             >
               <Icon className="w-5 h-5" />

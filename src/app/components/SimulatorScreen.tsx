@@ -42,8 +42,8 @@ const money = new Intl.NumberFormat('pt-BR', {
 });
 
 const inputClass =
-  'w-full bg-[#0F0F0F] border border-white/10 rounded-xl ' +
-  'px-4 py-3 text-white focus:border-[#4ADE80] focus:outline-none';
+  'w-full bg-[#101E35] border border-white/10 rounded-xl ' +
+  'px-4 py-3 text-white focus:border-[#E6BB66] focus:outline-none';
 
 function formatPercent(value: number) {
   return value.toLocaleString('pt-BR', {
@@ -214,14 +214,14 @@ export default function SimulatorScreen({
   ];
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white pb-28">
-      <header className="bg-[#1E1E1E] px-6 pt-8 pb-6">
+    <div className="min-h-screen bg-[#101E35] text-white pb-28">
+      <header className="bg-[#172B43] px-6 pt-8 pb-6">
         <div className="max-w-5xl mx-auto flex items-center gap-4">
           <button
             type="button"
             onClick={onBack}
             aria-label="Voltar"
-            className="text-[#B3B3B3] hover:text-white"
+            className="text-[#ADBFCC] hover:text-white"
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
@@ -234,8 +234,8 @@ export default function SimulatorScreen({
 
       <main className="max-w-5xl mx-auto px-6 pt-6 space-y-6">
         {goal && (
-          <section className="bg-[#4ADE80]/10 border border-[#4ADE80]/30 rounded-2xl p-5">
-            <p className="text-sm text-[#B3B3B3] mb-1">
+          <section className="bg-[#E6BB66]/10 border border-[#E6BB66]/30 rounded-2xl p-5">
+            <p className="text-sm text-[#ADBFCC] mb-1">
               Simulação da meta
             </p>
 
@@ -243,14 +243,14 @@ export default function SimulatorScreen({
               {goal.emoji} {goal.title}
             </h2>
 
-            <p className="text-sm text-[#B3B3B3] mt-2">
+            <p className="text-sm text-[#ADBFCC] mt-2">
               Objetivo: {money.format(goal.targetAmount)}
               {' · '}
               Prazo cadastrado:{' '}
               {formatReferenceDate(goal.deadline)}
             </p>
 
-            <p className="text-xs text-[#B3B3B3] mt-3">
+            <p className="text-xs text-[#ADBFCC] mt-3">
               Os campos foram preenchidos com os dados da
               meta. Alterações nesta simulação não modificam
               o cadastro. O período considera meses completos.
@@ -274,7 +274,7 @@ export default function SimulatorScreen({
           </section>
         )}
 
-        <section className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-5">
+        <section className="bg-[#172B43] border border-white/10 rounded-2xl p-5">
           <h2 className="font-semibold mb-4">
             Dados da simulação
           </h2>
@@ -283,7 +283,7 @@ export default function SimulatorScreen({
             <div>
               <label
                 htmlFor="initial-value"
-                className="block text-sm text-[#B3B3B3] mb-2"
+                className="block text-sm text-[#ADBFCC] mb-2"
               >
                 Valor inicial (R$)
               </label>
@@ -306,7 +306,7 @@ export default function SimulatorScreen({
             <div>
               <label
                 htmlFor="monthly-contribution"
-                className="block text-sm text-[#B3B3B3] mb-2"
+                className="block text-sm text-[#ADBFCC] mb-2"
               >
                 Aporte mensal (R$)
               </label>
@@ -331,7 +331,7 @@ export default function SimulatorScreen({
             <div>
               <label
                 htmlFor="simulation-period"
-                className="block text-sm text-[#B3B3B3] mb-2"
+                className="block text-sm text-[#ADBFCC] mb-2"
               >
                 Período em meses
               </label>
@@ -376,7 +376,7 @@ export default function SimulatorScreen({
               onClick={() =>
                 setRetry((value) => value + 1)
               }
-              className="text-sm text-[#4ADE80] disabled:opacity-50"
+              className="text-sm text-[#E6BB66] disabled:opacity-50"
             >
               Consultar novamente
             </button>
@@ -385,15 +385,15 @@ export default function SimulatorScreen({
           {loading ? (
             <div
               role="status"
-              className="flex items-center gap-3 py-8 text-[#B3B3B3]"
+              className="flex items-center gap-3 py-8 text-[#ADBFCC]"
             >
-              <Loader2 className="w-5 h-5 animate-spin text-[#4ADE80]" />
+              <Loader2 className="w-5 h-5 animate-spin text-[#E6BB66]" />
               Consultando referências de mercado…
             </div>
           ) : error ? (
             <p
               role="alert"
-              className="bg-[#1E1E1E] border border-red-400/30 rounded-xl p-4 text-red-300"
+              className="bg-[#172B43] border border-red-400/30 rounded-xl p-4 text-red-300"
             >
               {error}
             </p>
@@ -422,19 +422,19 @@ export default function SimulatorScreen({
                     }
                     className={`text-left rounded-2xl border p-5 transition-colors disabled:opacity-60 ${
                       investmentType === id
-                        ? 'bg-[#4ADE80]/10 border-[#4ADE80]'
-                        : 'bg-[#1E1E1E] border-white/10'
+                        ? 'bg-[#E6BB66]/10 border-[#E6BB66]'
+                        : 'bg-[#172B43] border-white/10'
                     }`}
                   >
                     <h3 className="font-bold text-lg">
                       {item.name}
                     </h3>
 
-                    <p className="text-sm text-[#B3B3B3] mt-1">
+                    <p className="text-sm text-[#ADBFCC] mt-1">
                       {item.benchmark}
                     </p>
 
-                    <p className="text-xl font-bold text-[#4ADE80] mt-4">
+                    <p className="text-xl font-bold text-[#E6BB66] mt-4">
                       {available &&
                       item.monthlyPercent !== null
                         ? `≈ ${formatPercent(
@@ -443,19 +443,19 @@ export default function SimulatorScreen({
                         : 'Indisponível'}
                     </p>
 
-                    <p className="text-xs text-[#B3B3B3] mt-3">
+                    <p className="text-xs text-[#ADBFCC] mt-3">
                       Referência:{' '}
                       {formatReferenceDate(
                         item.referenceDate,
                       )}
                     </p>
 
-                    <p className="text-xs text-[#B3B3B3] mt-1">
+                    <p className="text-xs text-[#ADBFCC] mt-1">
                       {item.source}
                     </p>
 
                     {item.fetchedAt && (
-                      <p className="text-xs text-[#B3B3B3] mt-1">
+                      <p className="text-xs text-[#ADBFCC] mt-1">
                         Consulta:{' '}
                         {new Date(
                           item.fetchedAt,
@@ -471,7 +471,7 @@ export default function SimulatorScreen({
                       </p>
                     )}
 
-                    <p className="text-xs text-[#B3B3B3] mt-3">
+                    <p className="text-xs text-[#ADBFCC] mt-3">
                       *{item.note}
                     </p>
                   </button>
@@ -481,14 +481,14 @@ export default function SimulatorScreen({
           ) : null}
         </section>
 
-        <section className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-5">
+        <section className="bg-[#172B43] border border-white/10 rounded-2xl p-5">
           <h2 className="font-semibold mb-4">
             Resultado da simulação
           </h2>
 
           {result ? (
             <>
-              <p className="text-sm text-[#B3B3B3] mb-5">
+              <p className="text-sm text-[#ADBFCC] mb-5">
                 {selectedRate?.name} · taxa de referência
                 mantida constante durante os {months}{' '}
                 meses.
@@ -513,13 +513,13 @@ export default function SimulatorScreen({
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="bg-[#0F0F0F] rounded-xl p-4"
+                    className="bg-[#101E35] rounded-xl p-4"
                   >
-                    <p className="text-xs text-[#B3B3B3] mb-2">
+                    <p className="text-xs text-[#ADBFCC] mb-2">
                       {item.label}
                     </p>
 
-                    <p className="font-bold text-lg text-[#4ADE80] break-words">
+                    <p className="font-bold text-lg text-[#E6BB66] break-words">
                       {money.format(item.value)}
                     </p>
                   </div>
@@ -527,15 +527,15 @@ export default function SimulatorScreen({
               </div>
 
               {goal && (
-                <div className="bg-[#0F0F0F] rounded-xl p-4 mb-6">
-                  <p className="text-sm text-[#B3B3B3]">
+                <div className="bg-[#101E35] rounded-xl p-4 mb-6">
+                  <p className="text-sm text-[#ADBFCC]">
                     Comparação com o objetivo de{' '}
                     {money.format(
                       goal.targetAmount,
                     )}
                   </p>
 
-                  <p className="text-sm text-[#B3B3B3] mt-1">
+                  <p className="text-sm text-[#ADBFCC] mt-1">
                     Período simulado: {months}{' '}
                     {months === 1 ? 'mês' : 'meses'}.
                   </p>
@@ -544,7 +544,7 @@ export default function SimulatorScreen({
                     className={`font-semibold mt-2 ${
                       result.finalValue >=
                       goal.targetAmount
-                        ? 'text-[#4ADE80]'
+                        ? 'text-[#E6BB66]'
                         : 'text-yellow-300'
                     }`}
                   >
@@ -560,7 +560,7 @@ export default function SimulatorScreen({
                         )}.`}
                   </p>
 
-                  <p className="text-xs text-[#B3B3B3] mt-2">
+                  <p className="text-xs text-[#ADBFCC] mt-2">
                     Comparação baseada nos valores e
                     no período informados. O resultado
                     futuro pode variar.
@@ -588,12 +588,12 @@ export default function SimulatorScreen({
 
                   <XAxis
                     dataKey="month"
-                    stroke="#B3B3B3"
+                    stroke="#ADBFCC"
                     fontSize={12}
                   />
 
                   <YAxis
-                    stroke="#B3B3B3"
+                    stroke="#ADBFCC"
                     fontSize={12}
                     width={75}
                     tickFormatter={(
@@ -611,7 +611,7 @@ export default function SimulatorScreen({
 
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#1E1E1E',
+                      backgroundColor: '#172B43',
                       border: '1px solid #444',
                       borderRadius: 12,
                       color: '#fff',
@@ -628,7 +628,7 @@ export default function SimulatorScreen({
                     name="Saldo bruto projetado"
                     type="monotone"
                     dataKey="value"
-                    stroke="#4ADE80"
+                    stroke="#E6BB66"
                     strokeWidth={3}
                     dot={false}
                   />
@@ -637,7 +637,7 @@ export default function SimulatorScreen({
                     name="Recursos aplicados"
                     type="monotone"
                     dataKey="contributed"
-                    stroke="#B3B3B3"
+                    stroke="#ADBFCC"
                     strokeWidth={2}
                     strokeDasharray="5 5"
                     dot={false}
@@ -645,13 +645,13 @@ export default function SimulatorScreen({
                 </LineChart>
               </ResponsiveContainer>
 
-              <p className="text-xs text-[#B3B3B3] mt-4">
+              <p className="text-xs text-[#ADBFCC] mt-4">
                 Verde: saldo projetado. Cinza:
                 valor inicial mais aportes.
               </p>
             </>
           ) : (
-            <p className="text-sm text-[#B3B3B3]">
+            <p className="text-sm text-[#ADBFCC]">
               Preencha valores válidos e selecione uma
               referência disponível para visualizar
               a projeção.
@@ -659,12 +659,12 @@ export default function SimulatorScreen({
           )}
         </section>
 
-        <section className="bg-[#4ADE80]/10 border border-[#4ADE80]/30 rounded-2xl p-4">
-          <h2 className="text-[#4ADE80] font-semibold mb-2">
+        <section className="bg-[#E6BB66]/10 border border-[#E6BB66]/30 rounded-2xl p-4">
+          <h2 className="text-[#E6BB66] font-semibold mb-2">
             Como interpretar
           </h2>
 
-          <p className="text-sm text-[#B3B3B3]">
+          <p className="text-sm text-[#ADBFCC]">
             Projeção educacional com aportes no final de
             cada mês e taxa constante. Os valores são
             brutos, sem descontar impostos, tarifas ou
@@ -674,7 +674,7 @@ export default function SimulatorScreen({
           </p>
 
           {goal && (
-            <p className="text-sm text-[#B3B3B3] mt-3">
+            <p className="text-sm text-[#ADBFCC] mt-3">
               Esta simulação não atualiza o saldo
               guardado nem o progresso da sua meta.
             </p>
@@ -686,7 +686,7 @@ export default function SimulatorScreen({
 
       <nav
         aria-label="Navegação principal"
-        className="fixed bottom-0 left-0 right-0 bg-[#1E1E1E] border-t border-white/10"
+        className="fixed bottom-0 left-0 right-0 bg-[#172B43] border-t border-white/10"
       >
         <div className="max-w-5xl mx-auto grid grid-cols-5 px-3 py-3">
           {navigation.map(
@@ -704,8 +704,8 @@ export default function SimulatorScreen({
                 }
                 className={`flex flex-col items-center gap-1 ${
                   screen === 'simulator'
-                    ? 'text-[#4ADE80]'
-                    : 'text-[#B3B3B3]'
+                    ? 'text-[#E6BB66]'
+                    : 'text-[#ADBFCC]'
                 }`}
               >
                 <Icon className="w-5 h-5" />

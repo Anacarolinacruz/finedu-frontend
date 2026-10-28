@@ -156,21 +156,21 @@ export default function LessonScreen({
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white pb-10">
-      <header className="bg-[#1E1E1E] border-b border-white/10">
+    <div className="min-h-screen bg-[#101E35] text-white pb-10">
+      <header className="bg-[#172B43] border-b border-white/10">
         <div className="max-w-4xl mx-auto px-6 pt-8 pb-6 flex items-center gap-4">
           <button
             type="button"
             onClick={onBack}
             disabled={completing}
             aria-label="Voltar para os cursos"
-            className="w-11 h-11 shrink-0 rounded-full bg-[#0F0F0F] flex items-center justify-center text-[#B3B3B3] hover:text-white transition-colors disabled:opacity-50"
+            className="w-11 h-11 shrink-0 rounded-full bg-[#101E35] flex items-center justify-center text-[#ADBFCC] hover:text-white transition-colors disabled:opacity-50"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
 
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-[#4ADE80] mb-1">
+            <p className="text-sm text-[#E6BB66] mb-1">
               {lesson?.courseTitle ?? 'Trilha de aprendizagem'}
             </p>
 
@@ -179,7 +179,7 @@ export default function LessonScreen({
             </h1>
           </div>
 
-          <BookOpen className="w-6 h-6 shrink-0 text-[#4ADE80]" />
+          <BookOpen className="w-6 h-6 shrink-0 text-[#E6BB66]" />
         </div>
       </header>
 
@@ -187,38 +187,38 @@ export default function LessonScreen({
         {loading ? (
           <div
             role="status"
-            className="flex items-center justify-center gap-3 py-16 text-[#B3B3B3]"
+            className="flex items-center justify-center gap-3 py-16 text-[#ADBFCC]"
           >
-            <Loader2 className="w-6 h-6 animate-spin text-[#4ADE80]" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#E6BB66]" />
             Carregando aula…
           </div>
         ) : error ? (
           <section
             role="alert"
-            className="bg-[#1E1E1E] border border-red-400/30 rounded-2xl p-6"
+            className="bg-[#172B43] border border-red-400/30 rounded-2xl p-6"
           >
             <p className="mb-4">{error}</p>
 
             <button
               type="button"
               onClick={() => setRetry((value) => value + 1)}
-              className="bg-[#4ADE80] text-[#0F0F0F] rounded-xl px-5 py-3 font-semibold"
+              className="bg-[#E6BB66] text-[#101E35] rounded-xl px-5 py-3 font-semibold"
             >
               Tentar novamente
             </button>
           </section>
         ) : lesson ? (
           <div className="space-y-6">
-            <section className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-5">
+            <section className="bg-[#172B43] border border-white/10 rounded-2xl p-5">
               <div className="flex flex-wrap items-center gap-4 text-sm">
-                <span className="flex items-center gap-2 text-[#B3B3B3]">
+                <span className="flex items-center gap-2 text-[#ADBFCC]">
                   <Clock className="w-4 h-4" />
                   {Math.ceil(lesson.durationSeconds / 60)}
                   {' min de leitura'}
                 </span>
 
                 {lesson.completed && (
-                  <span className="flex items-center gap-2 text-[#4ADE80]">
+                  <span className="flex items-center gap-2 text-[#E6BB66]">
                     <CheckCircle2 className="w-4 h-4" />
                     Aula concluída
                   </span>
@@ -226,7 +226,7 @@ export default function LessonScreen({
               </div>
             </section>
 
-            <article className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-6">
+            <article className="bg-[#172B43] border border-white/10 rounded-2xl p-6">
               <h2 className="text-lg font-semibold mb-5">
                 Conteúdo da aula
               </h2>
@@ -249,7 +249,7 @@ export default function LessonScreen({
                       ),
 
                       h3: ({ children }) => (
-                        <h3 className="text-lg font-semibold text-[#4ADE80] mt-6 mb-3">
+                        <h3 className="text-lg font-semibold text-[#E6BB66] mt-6 mb-3">
                           {children}
                         </h3>
                       ),
@@ -279,7 +279,7 @@ export default function LessonScreen({
                       ),
 
                       blockquote: ({ children }) => (
-                        <blockquote className="border-l-4 border-[#4ADE80] bg-[#4ADE80]/10 rounded-r-xl pl-4 pr-4 pt-4 pb-1 my-6">
+                        <blockquote className="border-l-4 border-[#E6BB66] bg-[#E6BB66]/10 rounded-r-xl pl-4 pr-4 pt-4 pb-1 my-6">
                           {children}
                         </blockquote>
                       ),
@@ -293,7 +293,7 @@ export default function LessonScreen({
                       ),
 
                       thead: ({ children }) => (
-                        <thead className="bg-[#4ADE80]/10 text-white">
+                        <thead className="bg-[#E6BB66]/10 text-white">
                           {children}
                         </thead>
                       ),
@@ -321,7 +321,7 @@ export default function LessonScreen({
                   </ReactMarkdown>
                 </div>
               ) : (
-                <p className="text-[#B3B3B3]">
+                <p className="text-[#ADBFCC]">
                   Esta aula ainda não possui conteúdo disponível.
                 </p>
               )}
@@ -339,7 +339,7 @@ export default function LessonScreen({
             {completionMessage && (
               <p
                 role="status"
-                className="rounded-xl border border-[#4ADE80]/30 bg-[#4ADE80]/10 p-4 text-[#4ADE80]"
+                className="rounded-xl border border-[#E6BB66]/30 bg-[#E6BB66]/10 p-4 text-[#E6BB66]"
               >
                 {completionMessage}
               </p>
@@ -349,7 +349,7 @@ export default function LessonScreen({
               type="button"
               onClick={() => void handleCompleteLesson()}
               disabled={completing || lesson.completed}
-              className="w-full bg-[#4ADE80] text-[#0F0F0F] px-6 py-4 rounded-2xl font-semibold hover:bg-[#22C55E] transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-[#E6BB66] text-[#101E35] px-6 py-4 rounded-2xl font-semibold hover:bg-[#2BAAA0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {completing ? (
                 <>
@@ -377,7 +377,7 @@ export default function LessonScreen({
                     onOpenLesson(lesson.previousLessonId);
                   }
                 }}
-                className="border border-white/10 bg-[#1E1E1E] rounded-xl px-4 py-3 flex items-center justify-center gap-2 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                className="border border-white/10 bg-[#172B43] rounded-xl px-4 py-3 flex items-center justify-center gap-2 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Aula anterior
@@ -391,7 +391,7 @@ export default function LessonScreen({
                     onOpenLesson(lesson.nextLessonId);
                   }
                 }}
-                className="border border-white/10 bg-[#1E1E1E] rounded-xl px-4 py-3 flex items-center justify-center gap-2 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                className="border border-white/10 bg-[#172B43] rounded-xl px-4 py-3 flex items-center justify-center gap-2 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Próxima aula
                 <ArrowRight className="w-4 h-4" />
@@ -402,7 +402,7 @@ export default function LessonScreen({
               type="button"
               onClick={onBack}
               disabled={completing}
-              className="w-full py-3 text-[#4ADE80] font-medium disabled:opacity-50"
+              className="w-full py-3 text-[#E6BB66] font-medium disabled:opacity-50"
             >
               Voltar para os cursos
             </button>

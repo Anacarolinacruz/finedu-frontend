@@ -1,5 +1,6 @@
+import loginScene from './login-piggy-scene.png';
 import { useState } from 'react';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, BookOpen, Target, Trophy, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'motion/react';
 import { login, type User } from '../services/api';
 
@@ -16,6 +17,7 @@ export default function LoginScreen({
 }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -45,129 +47,39 @@ export default function LoginScreen({
   };
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] p-6">
-      <div className="max-w-md mx-auto pt-12">
-        <div className="mb-12">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Bem-vindo de volta!
-          </h1>
-
-          <p className="text-[#B3B3B3]">
-            Entre para continuar sua jornada
-          </p>
-        </div>
-
-        <div className="space-y-4 mb-6">
-          <div className="relative">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#B3B3B3]" />
-
-            <input
-              type="email"
-              aria-label="E-mail"
-              placeholder="E-mail"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              autoComplete="email"
-              disabled={loading}
-              className="w-full bg-[#1E1E1E] border border-white/10 rounded-2xl px-12 py-4 text-white placeholder:text-[#B3B3B3] focus:border-[#4ADE80] focus:outline-none transition-colors disabled:opacity-60"
-            />
+    <div className="login-finance" style={{ backgroundImage: `url(${loginScene})` }}>
+      <header className="login-top">
+        <div className="login-logo"><BookOpen aria-hidden="true"/><span>Fin<span>Edu</span></span></div>
+        <p>Educação financeira<br/>para o seu futuro.</p>
+        <span className="login-values">Conhecimento <i/> Disciplina <i/> Liberdade</span>
+      </header>
+      <main className="login-content">
+        <section className="login-story" aria-label="Educação financeira FinEdu">
+          <h1>Pequenos passos.<br/><span>Grandes conquistas.</span></h1>
+          <p>Aprenda a cuidar do seu dinheiro e<br/> transforme seus planos em metas.</p>
+          <div className="login-benefits">
+            <div><BookOpen aria-hidden="true"/><h2>Aprenda</h2><p>Conteúdos práticos<br/>para o seu dia a dia.</p></div>
+            <div><Target aria-hidden="true"/><h2>Planeje</h2><p>Organize suas finanças<br/>e defina suas metas.</p></div>
+            <div><Trophy aria-hidden="true"/><h2>Conquiste</h2><p>Dê vida aos seus<br/>maiores planos.</p></div>
           </div>
-
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#B3B3B3]" />
-
-            <input
-              type="password"
-              aria-label="Senha"
-              placeholder="Senha"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
-              disabled={loading}
-              className="w-full bg-[#1E1E1E] border border-white/10 rounded-2xl px-12 py-4 text-white placeholder:text-[#B3B3B3] focus:border-[#4ADE80] focus:outline-none transition-colors disabled:opacity-60"
-            />
+        </section>
+        <section className="login-card" aria-labelledby="login-heading">
+          <h2 id="login-heading">Bem-vindo de volta!</h2>
+          <p>Continue sua jornada de educação financeira.</p>
+          <div className="login-fields">
+            <label htmlFor="login-email">E-mail</label>
+            <div className="login-input"><Mail aria-hidden="true"/><input id="login-email" type="email" placeholder="voce@exemplo.com" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" disabled={loading}/></div>
+            <label htmlFor="login-password">Senha</label>
+            <div className="login-input"><Lock aria-hidden="true"/><input id="login-password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" disabled={loading}/><button type="button" className="login-show" onClick={() => setShowPassword((current) => !current)} aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} disabled={loading}>{showPassword ? <EyeOff/> : <Eye/>}</button></div>
+            <button type="button" onClick={onForgotPassword} disabled={loading} className="login-forgot">Esqueci minha senha</button>
           </div>
-
-          <button
-            type="button"
-            onClick={onForgotPassword}
-            disabled={loading}
-            className="text-[#4ADE80] text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            Esqueci minha senha
-          </button>
-        </div>
-
-        {error && (
-          <p role="alert" className="text-red-400 text-sm mb-4">
-            {error}
-          </p>
-        )}
-
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.98 }}
-          onClick={handleLogin}
-          disabled={loading}
-          className="w-full bg-[#4ADE80] text-[#0F0F0F] px-8 py-4 rounded-2xl font-semibold hover:bg-[#22C55E] transition-colors mb-4 disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Entrando...' : 'Entrar'}
-        </motion.button>
-
-        <div className="relative my-8">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-white/10" />
-          </div>
-
-          <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-[#0F0F0F] text-[#B3B3B3]">
-              ou continue com
-            </span>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          className="w-full bg-[#1E1E1E] border border-white/10 text-white px-8 py-4 rounded-2xl font-medium hover:border-[#4ADE80]/50 transition-colors mb-8 flex items-center justify-center gap-3"
-        >
-          <svg
-            aria-hidden="true"
-            className="w-5 h-5"
-            viewBox="0 0 24 24"
-          >
-            <path
-              fill="#4285F4"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-            />
-          </svg>
-
-          Google
-        </button>
-
-        <p className="text-center text-[#B3B3B3]">
-          Não tem uma conta?{' '}
-          <button
-            type="button"
-            onClick={onSignup}
-            disabled={loading}
-            className="text-[#4ADE80] font-semibold disabled:opacity-60"
-          >
-            Criar conta
-          </button>
-        </p>
-      </div>
+          {error && <p role="alert" className="login-error">{error}</p>}
+          <motion.button type="button" whileTap={{ scale: 0.98 }} onClick={handleLogin} disabled={loading} className="login-submit">{loading ? 'Entrando...' : 'Entrar'}</motion.button>
+          <p className="login-signup">Não tem uma conta? <button type="button" onClick={onSignup} disabled={loading}>Criar conta</button></p>
+        </section>
+      </main>
+      <div className="login-falling-coin" aria-hidden="true">$</div>
+      <footer className="login-footer">FinEdu <span>|</span> Projeto acadêmico</footer>
     </div>
   );
 }

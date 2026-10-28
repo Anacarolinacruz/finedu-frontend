@@ -7,7 +7,7 @@ interface SplashScreenProps {
 
 export default function SplashScreen({ onStart }: SplashScreenProps) {
   return (
-    <div className="min-h-screen bg-[#0F0F0F] flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-[#101E35] flex flex-col items-center justify-center p-6">
       <motion.div
         initial={{ scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -15,39 +15,39 @@ export default function SplashScreen({ onStart }: SplashScreenProps) {
         className="flex flex-col items-center"
       >
         <div className="relative mb-8">
-          <div className="absolute inset-0 bg-[#4ADE80] opacity-20 blur-3xl rounded-full"></div>
-          <div className="relative bg-[#1E1E1E] p-8 rounded-3xl border border-[#4ADE80]/20">
-            <TrendingUp className="w-20 h-20 text-[#4ADE80]" strokeWidth={2.5} />
+          <div className="absolute inset-0 bg-[#E6BB66] opacity-20 blur-3xl rounded-full"></div>
+          <div className="relative bg-[#172B43] p-8 rounded-3xl border border-[#E6BB66]/20">
+            <TrendingUp className="w-20 h-20 text-[#E6BB66]" strokeWidth={2.5} />
           </div>
         </div>
 
         <h1 className="text-4xl font-bold text-white mb-2">FinEdu</h1>
-        <p className="text-[#B3B3B3] text-center mb-12 max-w-xs">
+        <p className="text-[#ADBFCC] text-center mb-12 max-w-xs">
           Sua jornada para a liberdade financeira começa aqui
         </p>
 
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={onStart}
-          className="w-full max-w-sm bg-[#4ADE80] text-[#0F0F0F] px-8 py-4 rounded-2xl font-semibold hover:bg-[#22C55E] transition-colors"
+          className="w-full max-w-sm bg-[#E6BB66] text-[#101E35] px-8 py-4 rounded-2xl font-semibold hover:bg-[#2BAAA0] transition-colors"
         >
           Começar
         </motion.button>
 
         <div className="flex items-center gap-6 mt-12">
           <div className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-[#4ADE80]" />
-            <span className="text-sm text-[#B3B3B3]">Aprenda</span>
+            <DollarSign className="w-5 h-5 text-[#E6BB66]" />
+            <span className="text-sm text-[#ADBFCC]">Aprenda</span>
           </div>
-          <div className="w-1 h-1 bg-[#4ADE80] rounded-full"></div>
+          <div className="w-1 h-1 bg-[#E6BB66] rounded-full"></div>
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-[#4ADE80]" />
-            <span className="text-sm text-[#B3B3B3]">Invista</span>
+            <TrendingUp className="w-5 h-5 text-[#E6BB66]" />
+            <span className="text-sm text-[#ADBFCC]">Invista</span>
           </div>
-          <div className="w-1 h-1 bg-[#4ADE80] rounded-full"></div>
+          <div className="w-1 h-1 bg-[#E6BB66] rounded-full"></div>
           <div className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-[#4ADE80]" />
-            <span className="text-sm text-[#B3B3B3]">Cresça</span>
+            <DollarSign className="w-5 h-5 text-[#E6BB66]" />
+            <span className="text-sm text-[#ADBFCC]">Cresça</span>
           </div>
         </div>
       </motion.div>

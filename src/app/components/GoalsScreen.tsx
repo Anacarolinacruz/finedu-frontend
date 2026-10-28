@@ -70,8 +70,8 @@ const moneyFormatter = new Intl.NumberFormat('pt-BR', {
 });
 
 const inputClass =
-  'w-full bg-[#0F0F0F] border border-white/10 rounded-xl ' +
-  'px-4 py-3 text-white focus:border-[#4ADE80] focus:outline-none';
+  'w-full bg-[#101E35] border border-white/10 rounded-xl ' +
+  'px-4 py-3 text-white focus:border-[#E6BB66] focus:outline-none';
 
 function formatMoney(value: number) {
   return moneyFormatter.format(value);
@@ -341,8 +341,8 @@ export default function GoalsScreen({
   ];
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white pb-28">
-      <header className="bg-[#1E1E1E] px-6 pt-8 pb-6">
+    <div className="min-h-screen bg-[#101E35] text-white pb-28">
+      <header className="bg-[#172B43] px-6 pt-8 pb-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-4">
@@ -350,7 +350,7 @@ export default function GoalsScreen({
                 type="button"
                 onClick={onBack}
                 aria-label="Voltar"
-                className="text-[#B3B3B3] hover:text-white"
+                className="text-[#ADBFCC] hover:text-white"
               >
                 <ArrowLeft className="w-6 h-6" />
               </button>
@@ -365,7 +365,7 @@ export default function GoalsScreen({
               onClick={openCreate}
               disabled={loading || Boolean(loadError)}
               aria-label="Criar meta"
-              className="w-11 h-11 bg-[#4ADE80] rounded-full flex items-center justify-center text-[#0F0F0F] disabled:opacity-50"
+              className="w-11 h-11 bg-[#E6BB66] rounded-full flex items-center justify-center text-[#101E35] disabled:opacity-50"
             >
               <Plus className="w-5 h-5" />
             </button>
@@ -388,15 +388,15 @@ export default function GoalsScreen({
             ].map((item) => (
               <div
                 key={item.label}
-                className="bg-[#0F0F0F] rounded-xl p-4 text-center"
+                className="bg-[#101E35] rounded-xl p-4 text-center"
               >
-                <p className="text-xl font-bold text-[#4ADE80] break-words">
+                <p className="text-xl font-bold text-[#E6BB66] break-words">
                   {loading || loadError
                     ? '—'
                     : item.value}
                 </p>
 
-                <p className="text-xs text-[#B3B3B3] mt-1">
+                <p className="text-xs text-[#ADBFCC] mt-1">
                   {item.label}
                 </p>
               </div>
@@ -418,15 +418,15 @@ export default function GoalsScreen({
         {loading ? (
           <div
             role="status"
-            className="flex justify-center items-center gap-3 py-16 text-[#B3B3B3]"
+            className="flex justify-center items-center gap-3 py-16 text-[#ADBFCC]"
           >
-            <Loader2 className="w-6 h-6 animate-spin text-[#4ADE80]" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#E6BB66]" />
             Carregando metas…
           </div>
         ) : loadError ? (
           <section
             role="alert"
-            className="bg-[#1E1E1E] rounded-2xl p-6"
+            className="bg-[#172B43] rounded-2xl p-6"
           >
             <p className="text-red-300 mb-4">
               {loadError}
@@ -437,20 +437,20 @@ export default function GoalsScreen({
               onClick={() =>
                 setRetry((value) => value + 1)
               }
-              className="bg-[#4ADE80] text-black px-5 py-3 rounded-xl font-semibold"
+              className="bg-[#E6BB66] text-black px-5 py-3 rounded-xl font-semibold"
             >
               Tentar novamente
             </button>
           </section>
         ) : goals.length === 0 ? (
-          <section className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-8 text-center">
-            <Target className="w-12 h-12 text-[#4ADE80] mx-auto mb-4" />
+          <section className="bg-[#172B43] border border-white/10 rounded-2xl p-8 text-center">
+            <Target className="w-12 h-12 text-[#E6BB66] mx-auto mb-4" />
 
             <h2 className="text-xl font-bold mb-2">
               Crie sua primeira meta
             </h2>
 
-            <p className="text-[#B3B3B3] mb-5">
+            <p className="text-[#ADBFCC] mb-5">
               Defina um objetivo e acompanhe quanto já
               guardou.
             </p>
@@ -458,7 +458,7 @@ export default function GoalsScreen({
             <button
               type="button"
               onClick={openCreate}
-              className="bg-[#4ADE80] text-black px-6 py-3 rounded-xl font-semibold"
+              className="bg-[#E6BB66] text-black px-6 py-3 rounded-xl font-semibold"
             >
               Criar meta
             </button>
@@ -502,11 +502,11 @@ export default function GoalsScreen({
             return (
               <section
                 key={goal.id}
-                className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-5"
+                className="bg-[#172B43] border border-white/10 rounded-2xl p-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-12 h-12 shrink-0 bg-[#4ADE80]/10 rounded-xl flex items-center justify-center text-2xl">
+                    <div className="w-12 h-12 shrink-0 bg-[#E6BB66]/10 rounded-xl flex items-center justify-center text-2xl">
                       {goal.emoji}
                     </div>
 
@@ -515,7 +515,7 @@ export default function GoalsScreen({
                         {goal.title}
                       </h2>
 
-                      <p className="text-sm text-[#B3B3B3]">
+                      <p className="text-sm text-[#ADBFCC]">
                         Prazo:{' '}
                         {new Date(
                           `${goal.deadline}T00:00:00`,
@@ -527,7 +527,7 @@ export default function GoalsScreen({
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${
                       onTrack
-                        ? 'bg-[#4ADE80]/10 text-[#4ADE80]'
+                        ? 'bg-[#E6BB66]/10 text-[#E6BB66]'
                         : 'bg-yellow-500/10 text-yellow-400'
                     }`}
                   >
@@ -536,7 +536,7 @@ export default function GoalsScreen({
                 </div>
 
                 <div className="flex flex-wrap justify-between gap-2 mb-2 text-sm">
-                  <span className="text-[#B3B3B3]">
+                  <span className="text-[#ADBFCC]">
                     Valor guardado
                   </span>
 
@@ -555,23 +555,23 @@ export default function GoalsScreen({
                   aria-valuenow={Number(
                     progress.toFixed(1),
                   )}
-                  className="h-3 bg-[#0F0F0F] rounded-full overflow-hidden"
+                  className="h-3 bg-[#101E35] rounded-full overflow-hidden"
                 >
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{
                       width: `${progress}%`,
                     }}
-                    className="h-full bg-[#4ADE80] rounded-full"
+                    className="h-full bg-[#E6BB66] rounded-full"
                   />
                 </div>
 
                 <div className="flex flex-wrap justify-between gap-2 mt-2 text-xs">
-                  <span className="text-[#B3B3B3]">
+                  <span className="text-[#ADBFCC]">
                     {progress.toFixed(1)}% concluído
                   </span>
 
-                  <span className="text-[#4ADE80]">
+                  <span className="text-[#E6BB66]">
                     {completed
                       ? 'Objetivo alcançado'
                       : `Faltam ${formatMoney(remaining)}`}
@@ -579,8 +579,8 @@ export default function GoalsScreen({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
-                  <div className="bg-[#0F0F0F] rounded-xl p-3">
-                    <p className="text-xs text-[#B3B3B3] mb-1">
+                  <div className="bg-[#101E35] rounded-xl p-3">
+                    <p className="text-xs text-[#ADBFCC] mb-1">
                       Aporte mensal planejado
                     </p>
 
@@ -589,8 +589,8 @@ export default function GoalsScreen({
                     </p>
                   </div>
 
-                  <div className="bg-[#0F0F0F] rounded-xl p-3">
-                    <p className="text-xs text-[#B3B3B3] mb-1">
+                  <div className="bg-[#101E35] rounded-xl p-3">
+                    <p className="text-xs text-[#ADBFCC] mb-1">
                       Necessário por mês, sem rendimentos
                     </p>
 
@@ -609,7 +609,7 @@ export default function GoalsScreen({
                 </div>
 
                 {!completed && deadline.months > 0 && (
-                  <p className="text-xs text-[#B3B3B3] mt-3">
+                  <p className="text-xs text-[#ADBFCC] mt-3">
                     Planejamento com{' '}
                     {deadline.months}{' '}
                     {deadline.months === 1
@@ -630,7 +630,7 @@ export default function GoalsScreen({
                     type="button"
                     onClick={() => onSimulateGoal(goal)}
                     disabled={deletingId !== null}
-                    className="flex items-center gap-2 bg-[#4ADE80] text-black rounded-xl px-4 py-2 text-sm font-semibold hover:bg-[#22C55E] disabled:opacity-50"
+                    className="flex items-center gap-2 bg-[#E6BB66] text-black rounded-xl px-4 py-2 text-sm font-semibold hover:bg-[#2BAAA0] disabled:opacity-50"
                   >
                     <TrendingUp className="w-4 h-4" />
                     Simular esta meta
@@ -640,7 +640,7 @@ export default function GoalsScreen({
                     type="button"
                     onClick={() => openEdit(goal)}
                     disabled={deletingId !== null}
-                    className="flex items-center gap-2 border border-white/10 rounded-xl px-4 py-2 text-sm hover:border-[#4ADE80] disabled:opacity-50"
+                    className="flex items-center gap-2 border border-white/10 rounded-xl px-4 py-2 text-sm hover:border-[#E6BB66] disabled:opacity-50"
                   >
                     <Pencil className="w-4 h-4" />
                     Editar / atualizar saldo
@@ -683,7 +683,7 @@ export default function GoalsScreen({
             setForm(null);
           }
         }}
-        className="m-auto w-[calc(100%_-_2rem)] max-w-lg max-h-[90dvh] overflow-y-auto rounded-3xl border border-white/10 bg-[#1E1E1E] p-6 text-white backdrop:bg-black/80"
+        className="m-auto w-[calc(100%_-_2rem)] max-w-lg max-h-[90dvh] overflow-y-auto rounded-3xl border border-white/10 bg-[#172B43] p-6 text-white backdrop:bg-black/80"
       >
         {form && (
           <form onSubmit={handleSave}>
@@ -711,7 +711,7 @@ export default function GoalsScreen({
               className="space-y-4"
             >
               <div>
-                <p className="text-sm text-[#B3B3B3] mb-2">
+                <p className="text-sm text-[#ADBFCC] mb-2">
                   Escolha um ícone
                 </p>
 
@@ -729,8 +729,8 @@ export default function GoalsScreen({
                       }
                       className={`w-11 h-11 rounded-xl border text-2xl ${
                         form.emoji === emoji
-                          ? 'border-[#4ADE80] bg-[#4ADE80]/10'
-                          : 'border-white/10 bg-[#0F0F0F]'
+                          ? 'border-[#E6BB66] bg-[#E6BB66]/10'
+                          : 'border-white/10 bg-[#101E35]'
                       }`}
                     >
                       {emoji}
@@ -742,7 +742,7 @@ export default function GoalsScreen({
               <div>
                 <label
                   htmlFor="goal-title"
-                  className="block text-sm text-[#B3B3B3] mb-2"
+                  className="block text-sm text-[#ADBFCC] mb-2"
                 >
                   Nome da meta
                 </label>
@@ -787,7 +787,7 @@ export default function GoalsScreen({
                 <div key={field}>
                   <label
                     htmlFor={`goal-${field}`}
-                    className="block text-sm text-[#B3B3B3] mb-2"
+                    className="block text-sm text-[#ADBFCC] mb-2"
                   >
                     {label}
                   </label>
@@ -815,7 +815,7 @@ export default function GoalsScreen({
               <div>
                 <label
                   htmlFor="goal-deadline"
-                  className="block text-sm text-[#B3B3B3] mb-2"
+                  className="block text-sm text-[#ADBFCC] mb-2"
                 >
                   Prazo
                 </label>
@@ -840,7 +840,7 @@ export default function GoalsScreen({
                 />
               </div>
 
-              <p className="text-xs text-[#B3B3B3]">
+              <p className="text-xs text-[#ADBFCC]">
                 O aporte mensal é um planejamento.
                 Atualize o valor guardado conforme suas
                 contribuições reais.
@@ -869,7 +869,7 @@ export default function GoalsScreen({
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 flex items-center justify-center gap-2 bg-[#4ADE80] text-black rounded-xl py-3 font-semibold disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 bg-[#E6BB66] text-black rounded-xl py-3 font-semibold disabled:opacity-50"
               >
                 {saving && (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -888,7 +888,7 @@ export default function GoalsScreen({
 
       <nav
         aria-label="Navegação principal"
-        className="fixed bottom-0 left-0 right-0 bg-[#1E1E1E] border-t border-white/10"
+        className="fixed bottom-0 left-0 right-0 bg-[#172B43] border-t border-white/10"
       >
         <div className="max-w-5xl mx-auto grid grid-cols-5 px-3 py-3">
           {navigation.map(
@@ -904,8 +904,8 @@ export default function GoalsScreen({
                 onClick={() => onNavigate(screen)}
                 className={`flex flex-col items-center gap-1 ${
                   screen === 'goals'
-                    ? 'text-[#4ADE80]'
-                    : 'text-[#B3B3B3]'
+                    ? 'text-[#E6BB66]'
+                    : 'text-[#ADBFCC]'
                 }`}
               >
                 <Icon className="w-5 h-5" />

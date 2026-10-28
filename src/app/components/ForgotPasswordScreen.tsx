@@ -39,12 +39,12 @@ export default function ForgotPasswordScreen({
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] p-6 text-white">
+    <div className="min-h-screen bg-[#101E35] p-6 text-white">
       <main className="max-w-md mx-auto pt-12">
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-2 text-[#B3B3B3] mb-8"
+          className="flex items-center gap-2 text-[#ADBFCC] mb-8"
         >
           <ArrowLeft className="w-5 h-5" />
           Voltar ao login
@@ -54,7 +54,7 @@ export default function ForgotPasswordScreen({
           Esqueceu sua senha?
         </h1>
 
-        <p className="text-[#B3B3B3] mb-8">
+        <p className="text-[#ADBFCC] mb-8">
           Informe o e-mail da sua conta para receber um link de
           recuperação.
         </p>
@@ -66,7 +66,7 @@ export default function ForgotPasswordScreen({
             </label>
 
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#B3B3B3]" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#ADBFCC]" />
 
               <input
                 id="recovery-email"
@@ -76,7 +76,7 @@ export default function ForgotPasswordScreen({
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="Seu e-mail cadastrado"
-                className="w-full bg-[#1E1E1E] border border-white/10 rounded-2xl pl-12 pr-4 py-4 focus:border-[#4ADE80] focus:outline-none"
+                className="w-full bg-[#172B43] border border-white/10 rounded-2xl pl-12 pr-4 py-4 focus:border-[#E6BB66] focus:outline-none"
               />
             </div>
           </div>
@@ -88,7 +88,7 @@ export default function ForgotPasswordScreen({
           )}
 
           {message && (
-            <p role="status" className="text-[#4ADE80] text-sm">
+            <p role="status" className="text-[#E6BB66] text-sm">
               {message} Confira também a pasta de spam.
             </p>
           )}
@@ -96,7 +96,7 @@ export default function ForgotPasswordScreen({
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#4ADE80] text-[#0F0F0F] py-4 rounded-2xl font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full bg-[#E6BB66] text-[#101E35] py-4 rounded-2xl font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? 'Enviando…' : 'Enviar link de recuperação'}
           </button>

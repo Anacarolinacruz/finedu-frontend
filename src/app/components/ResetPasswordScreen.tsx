@@ -57,10 +57,10 @@ export default function ResetPasswordScreen({
   }
 
   const inputClassName =
-    'w-full bg-[#1E1E1E] border border-white/10 rounded-2xl px-4 py-4 focus:border-[#4ADE80] focus:outline-none';
+    'w-full bg-[#172B43] border border-white/10 rounded-2xl px-4 py-4 focus:border-[#E6BB66] focus:outline-none';
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] p-6 text-white">
+    <div className="min-h-screen bg-[#101E35] p-6 text-white">
       <main className="max-w-md mx-auto pt-12">
         <h1 className="text-3xl font-bold mb-3">
           Redefinir senha
@@ -68,14 +68,14 @@ export default function ResetPasswordScreen({
 
         {message ? (
           <div className="space-y-6 mt-6">
-            <p role="status" className="text-[#4ADE80]">
+            <p role="status" className="text-[#E6BB66]">
               {message}
             </p>
 
             <button
               type="button"
               onClick={onBackToLogin}
-              className="w-full bg-[#4ADE80] text-[#0F0F0F] py-4 rounded-2xl font-semibold"
+              className="w-full bg-[#E6BB66] text-[#101E35] py-4 rounded-2xl font-semibold"
             >
               Ir para o login
             </button>
@@ -90,14 +90,14 @@ export default function ResetPasswordScreen({
             <button
               type="button"
               onClick={onBackToLogin}
-              className="text-[#4ADE80]"
+              className="text-[#E6BB66]"
             >
               Voltar ao login
             </button>
           </div>
         ) : (
           <>
-            <p className="text-[#B3B3B3] mb-8">
+            <p className="text-[#ADBFCC] mb-8">
               Use de 8 a 72 caracteres, incluindo uma letra
               maiúscula, uma minúscula e um número.
             </p>
@@ -153,7 +153,7 @@ export default function ResetPasswordScreen({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#4ADE80] text-[#0F0F0F] py-4 rounded-2xl font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full bg-[#E6BB66] text-[#101E35] py-4 rounded-2xl font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? 'Salvando…' : 'Salvar nova senha'}
               </button>
@@ -162,7 +162,7 @@ export default function ResetPasswordScreen({
                 type="button"
                 onClick={onBackToLogin}
                 disabled={loading}
-                className="w-full text-[#B3B3B3] py-2 disabled:opacity-60"
+                className="w-full text-[#ADBFCC] py-2 disabled:opacity-60"
               >
                 Voltar ao login
               </button>

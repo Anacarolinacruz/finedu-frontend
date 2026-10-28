@@ -169,10 +169,10 @@ export default function CourseQuiz({
   const completed = trail.status === 'COMPLETED';
 
   return (
-    <section className="mt-8 rounded-3xl border border-white/10 bg-[#1E1E1E] p-5 md:p-6">
+    <section className="mt-8 rounded-3xl border border-white/10 bg-[#172B43] p-5 md:p-6">
       <div className="flex items-start gap-3 mb-4">
-        <div className="w-11 h-11 shrink-0 rounded-xl bg-[#4ADE80]/10 flex items-center justify-center">
-          <Award className="w-6 h-6 text-[#4ADE80]" />
+        <div className="w-11 h-11 shrink-0 rounded-xl bg-[#E6BB66]/10 flex items-center justify-center">
+          <Award className="w-6 h-6 text-[#E6BB66]" />
         </div>
 
         <div>
@@ -180,14 +180,14 @@ export default function CourseQuiz({
             Questionário final
           </h2>
 
-          <p className="text-sm text-[#B3B3B3] mt-1">
+          <p className="text-sm text-[#ADBFCC] mt-1">
             Responda às três perguntas e acerte pelo menos duas
             para concluir a trilha.
           </p>
         </div>
       </div>
 
-      <div className="rounded-2xl bg-[#0F0F0F] p-4 mb-6">
+      <div className="rounded-2xl bg-[#101E35] p-4 mb-6">
         <p className="text-sm text-[#D1D5DB] leading-relaxed">
           Cada pergunta respondida representa 10% de progresso.
           O primeiro acerto de cada pergunta vale 10 XP.
@@ -196,7 +196,7 @@ export default function CourseQuiz({
           bônus de 10 XP.
         </p>
 
-        <p className="text-sm text-[#4ADE80] mt-3">
+        <p className="text-sm text-[#E6BB66] mt-3">
           {trail.answeredQuestions} de {trail.totalQuestions}
           {' perguntas respondidas · '}
           {trail.correctQuestions} acertos
@@ -206,9 +206,9 @@ export default function CourseQuiz({
       {completed && (
         <div
           role="status"
-          className="rounded-2xl border border-[#4ADE80]/30 bg-[#4ADE80]/10 p-4 mb-6"
+          className="rounded-2xl border border-[#E6BB66]/30 bg-[#E6BB66]/10 p-4 mb-6"
         >
-          <div className="flex items-center gap-2 text-[#4ADE80] font-semibold">
+          <div className="flex items-center gap-2 text-[#E6BB66] font-semibold">
             <CheckCircle2 className="w-5 h-5" />
             Trilha concluída!
           </div>
@@ -222,7 +222,7 @@ export default function CourseQuiz({
       )}
 
       {!trail.quizUnlocked ? (
-        <div className="flex items-center gap-3 rounded-2xl border border-white/10 p-4 text-[#B3B3B3]">
+        <div className="flex items-center gap-3 rounded-2xl border border-white/10 p-4 text-[#ADBFCC]">
           <Lock className="w-5 h-5 shrink-0" />
 
           <p className="text-sm">
@@ -234,9 +234,9 @@ export default function CourseQuiz({
       ) : loading ? (
         <div
           role="status"
-          className="flex items-center justify-center gap-3 py-8 text-[#B3B3B3]"
+          className="flex items-center justify-center gap-3 py-8 text-[#ADBFCC]"
         >
-          <Loader2 className="w-5 h-5 animate-spin text-[#4ADE80]" />
+          <Loader2 className="w-5 h-5 animate-spin text-[#E6BB66]" />
           Carregando questionário…
         </div>
       ) : loadError ? (
@@ -248,7 +248,7 @@ export default function CourseQuiz({
           <button
             type="button"
             onClick={() => setRetry((current) => current + 1)}
-            className="rounded-xl bg-[#4ADE80] px-4 py-3 text-[#0F0F0F] font-semibold"
+            className="rounded-xl bg-[#E6BB66] px-4 py-3 text-[#101E35] font-semibold"
           >
             Tentar novamente
           </button>
@@ -256,7 +256,7 @@ export default function CourseQuiz({
       ) : quiz ? (
         <div className="space-y-5">
           {quiz.questions.length === 0 && (
-            <p className="text-sm text-[#B3B3B3]">
+            <p className="text-sm text-[#ADBFCC]">
               Nenhuma pergunta disponível no momento.
             </p>
           )}
@@ -275,7 +275,7 @@ export default function CourseQuiz({
                   event.preventDefault();
                   void handleAnswer(question.id);
                 }}
-                className="rounded-2xl border border-white/10 bg-[#0F0F0F] p-4 md:p-5"
+                className="rounded-2xl border border-white/10 bg-[#101E35] p-4 md:p-5"
               >
                 <fieldset
                   disabled={correct || submittingId !== null}
@@ -285,7 +285,7 @@ export default function CourseQuiz({
                   </legend>
 
                   {correct && (
-                    <p className="flex items-center gap-2 text-sm text-[#4ADE80] mb-4">
+                    <p className="flex items-center gap-2 text-sm text-[#E6BB66] mb-4">
                       <CheckCircle2 className="w-4 h-4" />
                       Pergunta já acertada
                     </p>
@@ -302,12 +302,12 @@ export default function CourseQuiz({
                           key={option.id}
                           className={`flex items-start gap-3 rounded-xl border p-4 text-sm transition-colors ${
                             selected
-                              ? 'border-[#4ADE80] bg-[#4ADE80]/10 text-white'
+                              ? 'border-[#E6BB66] bg-[#E6BB66]/10 text-white'
                               : 'border-white/10 text-[#D1D5DB]'
                           } ${
                             correct || submittingId !== null
                               ? 'cursor-default'
-                              : 'cursor-pointer hover:border-[#4ADE80]/50'
+                              : 'cursor-pointer hover:border-[#E6BB66]/50'
                           }`}
                         >
                           <input
@@ -321,7 +321,7 @@ export default function CourseQuiz({
                                 [question.id]: option.id,
                               }))
                             }
-                            className="mt-0.5 accent-[#4ADE80]"
+                            className="mt-0.5 accent-[#E6BB66]"
                           />
 
                           <span>{option.text}</span>
@@ -336,7 +336,7 @@ export default function CourseQuiz({
                       disabled={
                         !hasSelection || submittingId !== null
                       }
-                      className="mt-4 w-full rounded-xl bg-[#4ADE80] px-4 py-3 font-semibold text-[#0F0F0F] disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="mt-4 w-full rounded-xl bg-[#E6BB66] px-4 py-3 font-semibold text-[#101E35] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {sending ? (
                         <span className="flex items-center justify-center gap-2">
@@ -366,14 +366,14 @@ export default function CourseQuiz({
                     role="status"
                     className={`mt-4 rounded-xl border p-4 ${
                       result.correct
-                        ? 'border-[#4ADE80]/30 bg-[#4ADE80]/10'
+                        ? 'border-[#E6BB66]/30 bg-[#E6BB66]/10'
                         : 'border-amber-400/30 bg-amber-400/10'
                     }`}
                   >
                     <p
                       className={`font-semibold text-sm ${
                         result.correct
-                          ? 'text-[#4ADE80]'
+                          ? 'text-[#E6BB66]'
                           : 'text-amber-300'
                       }`}
                     >
@@ -387,7 +387,7 @@ export default function CourseQuiz({
                     </p>
 
                     {result.xpAwarded > 0 && (
-                      <p className="text-sm font-semibold text-[#4ADE80] mt-3">
+                      <p className="text-sm font-semibold text-[#E6BB66] mt-3">
                         +{result.xpAwarded} XP recebidos nesta
                         atualização
                       </p>
